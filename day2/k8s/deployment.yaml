@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: studentportal
+  labels:
+    app: studentportal
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: studentportal
+  template:
+    metadata:
+      labels:
+        app: studentportal
+    spec:
+      containers:
+      - name: studentportal-container
+        image: 879381241087.dkr.ecr.ap-south-1.amazonaws.com/jan26week5-studentportal:1.0
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+
+        env:
+        - name: DB_LINK
+          # value: postgresql://postgres:admin1234@studentportal.cvik8accw2tk.ap-south-1.rds.amazonaws.com:5432/postgres
+          valueFrom:
+            secretKeyRef:
+              name: studentportaldb
+              key: db_link
+
+        - name: FLASK_APP
+          valueFrom:
+            configMapKeyRef:
+              name: flask-config
+              key: FLASK_APP
+
+      imagePullSecrets:
+      - name: ecr-secret
+
+       
