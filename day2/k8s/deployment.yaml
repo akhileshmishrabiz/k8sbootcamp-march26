@@ -23,10 +23,11 @@ spec:
 
         resources:
           requests:
-            memory: "64Mi"
-            cpu: "250m"
+            memory: "256Mi"
+            # 0.01 
+            cpu: "256m"
           limits:
-            memory: "128Mi"
+            memory: "8048Mi"
             cpu: "500m"
 
         env:
