@@ -36,3 +36,10 @@ kubectl port-forward svc/studentportal 8080:80
 echo -n "postgresql://postgres:admin1234@studentportal.cvik8accw2tk.ap-south-1.rds.amazonaws.com:5432/postgres"
 
 use the base64 encoded value for secret
+
+add the secret in deployment
+
+
+
+minikube addons enable metrics-server
+

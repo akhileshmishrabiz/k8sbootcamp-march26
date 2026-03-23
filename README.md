@@ -1,21 +1,16 @@
 # k8sbootcamp-march26
 
-curl -O https://s3.us-west-2.amazonaws.com/amazon-eks/1.33.8/2026-02-27/bin/darwin/amd64/kubectl
+1. why k8s?
 
+2. basic architecture of k8s
 
-# minikube install
+3. basic objects like pod, deployment and all
 
-curl -LO https://github.com/kubernetes/minikube/releases/latest/download/minikube-linux-amd64
+4. running a local cluster with minikube
 
-sudo install minikube-linux-amd64 /usr/local/bin/minikube && rm minikube-linux-amd64
+Minikube, kind, k3s and a lot more of them
 
-#  start the cluster
-minikube start
+5. deploying first pod, deployement and basic stuff
 
-minikube status
+6. project: deploy a 2-tier app on k8s with minikube
 
-kubectl run web-server --image=nginx
-
-kubectl create deployment nginxwith-dep --image=nginx --replicas=3
-
-kubectl scale deployment nginxwith-dep --replicas=5
