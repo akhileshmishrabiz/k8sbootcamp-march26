@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: studentportal
+  labels:
+    app: studentportal
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: studentportal
+  template:
+    metadata:
+      labels:
+        app: studentportal
+    spec:
+      containers:
+      - name: studentportal-container
+        image: week2app:3.0 
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8000
+
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "256m"
+          limits:
+            memory: "8048Mi"
+            cpu: "500m"
+
+        livenessProbe:
+          httpGet:
+            path: /healthy
+            port: 8000
+          initialDelaySeconds: 120
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /healthy
+            port: 8000
+          # Liveness Probe Configuration
+          # initialDelaySeconds: 10        - Time to wait before first probe check after container starts
+          # periodSeconds: 5               - Interval between consecutive probe checks
+          # timeoutSeconds: 3              - Maximum time allowed for probe to complete and return a response
+          # failureThreshold: 2            - Number of consecutive failed probes before container restart is triggered
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2
+
+        env:
+        - name: DB_LINK
+          value: postgresql://postgres:password@postgres-service.default.svc.cluster.local:5432/mydb
