@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: studentportal-container
-        image: 879381241087.dkr.ecr.ap-south-1.amazonaws.com/jan26week5-studentportal:latest
+        image: 879381241087.dkr.ecr.ap-south-1.amazonaws.com/jan26week5-studentportal:argosync
         imagePullPolicy: Always
         ports:
         - containerPort: 8000

@@ -44,6 +44,16 @@ docker build -t  879381241087.dkr.ecr.ap-south-1.amazonaws.com/jan26week5-studen
 
 aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 879381241087.dkr.ecr.ap-south-1.amazonaws.com
 
+
+
+kubectl create secret docker-registry ecr-secret \
+  --docker-server=879381241087.dkr.ecr.ap-south-1.amazonaws.com \
+  --docker-username=AWS \
+  --docker-password=$(aws ecr get-login-password --region ap-south-1) 
+
+
+  docker build -t  879381241087.dkr.ecr.ap-south-1.amazonaws.com/jan26week5-studentportal:argosync  .
+
 # argocd setup
 https://gist.github.com/bhimsur/b6c575916883ff7712861beacbe1ff0b
 
