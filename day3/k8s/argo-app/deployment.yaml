@@ -16,8 +16,8 @@ spec:
     spec:
       containers:
       - name: studentportal-container
-        image: app:1.0 
-        imagePullPolicy: Never
+        image: 879381241087.dkr.ecr.ap-south-1.amazonaws.com/jan26week5-studentportal:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8000
 
@@ -55,3 +55,6 @@ spec:
         env:
         - name: DB_LINK
           value: postgresql://postgres:password@postgres-service.default.svc.cluster.local:5432/mydb
+
+      imagePullSecrets:
+      - name: ecr-secret

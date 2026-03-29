@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{% endblock %} - Student Attendance</title>
+    <title>{% block title %}{% endblock %} - Livingdevops</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -19,11 +19,11 @@
     </script>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
-<body class="min-h-screen bg-gray-50">
+<body class="min-h-screen bg-gray-300">
     <!-- Main Header -->
     <header class="bg-navy">
         <div class="max-w-full mx-auto">
-            <h1 class="text-white text-4xl font-bold text-center py-16">Student Attendance</h1>
+            <h1 class="text-white text-4xl font-bold text-center py-16">livingdevops</h1>
             {% if current_user.is_authenticated %}
             <nav class="bg-navy-light">
                 <div class="max-w-7xl mx-auto px-6">
@@ -34,7 +34,7 @@
                             <a href="{{ url_for('main.attendance') }}" class="text-white hover:bg-navy px-4 py-2 rounded-md text-lg">Attendance</a>
                             <a href="{{ url_for('main.classes') }}" class="text-white hover:bg-navy px-4 py-2 rounded-md text-lg">Classes</a>
                             <a href="{{ url_for('main.assignments') }}" class="text-white hover:bg-navy px-4 py-2 rounded-md text-lg">Assignments</a>
-                            <a href="{{ url_for('main.announcements') }}" class="text-white hover:bg-navy px-4 py-2 rounded-md text-lg">Announcements</a>
+                            <!-- <a href="{{ url_for('main.announcements') }}" class="text-white hover:bg-navy px-4 py-2 rounded-md text-lg">Announcements</a> -->
                         </div>
                         <div class="flex items-center space-x-6">
                             <span class="text-white text-lg">{{ current_user.username }}</span>
