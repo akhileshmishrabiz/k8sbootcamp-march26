@@ -1,0 +1,11 @@
+# name: argo build
+
+# on:
+#   workflow_dispatch:
+
+
+# env: 
+#   AWS_REGION: ap-south-1
+#   ECR_REGISTRY: 879381241087.dkr.ecr.ap-south-1.amazonaws.com
+#   ECR_REPOSITORY: jan26week5-studentportal
+#   IMAGE_TAG: $GITHUB_SHA
