@@ -29,7 +29,8 @@ services:
       - DB_NAME=devops_learning
       - DB_USERNAME=postgres
       - DB_PASSWORD=postgres
-      - ALLOWED_ORIGINS=http://localhost:3000,http://localhost:80
+      # CORS allowed origins for local development
+      - ALLOWED_ORIGINS=http://localhost:80
     ports:
       - "8000:8000"
     depends_on:
