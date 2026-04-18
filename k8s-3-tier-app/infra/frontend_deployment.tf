@@ -114,6 +114,6 @@ resource "kubernetes_service" "frontend" {
       target_port = 80
     }
 
-    type = "LoadBalancer"
+    type = "ClusterIP"
   }
 }

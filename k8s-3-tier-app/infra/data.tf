@@ -1,6 +1,12 @@
 # data source for vpc id
+# data "aws_vpc" "main" {
+#   id = var.vpc_id
+# }
+
+
 data "aws_vpc" "main" {
-  id = var.vpc_id
+  filter {
+    name   = "tag:Name"
+    values = [var.vpc_name]
+  }
 }
-
-

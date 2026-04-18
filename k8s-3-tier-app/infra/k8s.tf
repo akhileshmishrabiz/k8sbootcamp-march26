@@ -57,7 +57,7 @@ resource "kubernetes_config_map" "frontend" {
 
   data = {
     # BACKEND_URL = "http://backend:8000"
-    BaCKEND_URL = "http://${kubernetes_service.backend.spec[0].cluster_ip}:${kubernetes_service.backend.spec[0].port[0].port}"
+    BACKEND_URL = "http://${kubernetes_service.backend.spec[0].cluster_ip}:${kubernetes_service.backend.spec[0].port[0].port}"
   }
 
 depends_on = [ kubernetes_namespace.namespace ]
@@ -68,3 +68,5 @@ depends_on = [ kubernetes_namespace.namespace ]
 
 
 # ingress   
+
+

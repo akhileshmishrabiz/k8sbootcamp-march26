@@ -25,3 +25,7 @@ variable "frontend_image" {
 variable "app_namepace" {
   default = "k8s-3tier-app"
 }
+
+variable "vpc_name" {
+  default = "eks-vpc"
+}
