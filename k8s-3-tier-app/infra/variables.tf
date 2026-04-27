@@ -29,3 +29,21 @@ variable "app_namepace" {
 variable "vpc_name" {
   default = "eks-vpc"
 }
+
+variable "domain_name" {
+  description = "Main domain name for the application"
+  type        = string
+  default     = "livingdevops.org"
+}
+
+variable "app_subdomain" {
+  description = "Subdomain for the application"
+  type        = string
+  default     = "devopsdojo"
+}
+
+# devopsdojo.livingdevops.org
+
+variable "aws_alb_zoneid" {
+  default = "ZP97RAFLXTNZK"
+}
