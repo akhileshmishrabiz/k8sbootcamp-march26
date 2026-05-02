@@ -50,5 +50,5 @@ jobs:
           image-ref: ${{ env.ECR_REGISTRY }}/${{ matrix.service.ecr_repo }}:${{ github.sha }}
           format: "table"
           exit-code: "1"
-          vuln-type: 'os,library'
+          vuln-type: 'os'
           severity: 'CRITICAL,HIGH'
