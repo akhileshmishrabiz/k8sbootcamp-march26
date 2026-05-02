@@ -50,8 +50,8 @@ jobs:
             ${{ env.ECR_REGISTRY }}/${{ matrix.service.ecr_repo }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      
-      -name: scan-image:
+    
+      - name: scan-image
         uses: aquasecurity/trivy-action@v1
         with:
           scan-type: "image"
@@ -61,4 +61,3 @@ jobs:
           ignore-unfixed: true
           ignore-unaddressable: true
           ignore-unauthenticated: true
-
