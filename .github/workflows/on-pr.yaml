@@ -52,7 +52,7 @@ jobs:
           cache-to: type=gha,mode=max
     
       - name: scan-image
-        uses: aquasecurity/trivy-action@v1
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: "image"
           image-ref: ${{ env.ECR_REGISTRY }}/${{ matrix.service.ecr_repo }}:${{ github.sha }}
