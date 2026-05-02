@@ -1,0 +1,88 @@
+name: 3tier-build-deploy-k8s
+
+on:
+  push:
+  workflow_dispatch:
+
+  
+  
+
+jobs:
+  build-services:
+    runs-on: ubuntu-latest
+    env: 
+      tag: $GITHUB_SHA
+    strategy: 
+      fail-fast: false
+      matrix:
+        service:
+          - name: frontend
+            path: k8s-3-tier-app/app/frontend/
+            ecr_repo: 879381241087.dkr.ecr.ap-south-1.amazonaws.com/devopsdozo-frontend
+          - name: backend
+            path: k8s-3-tier-app/app/backend/ 
+            ecr_repo: 879381241087.dkr.ecr.ap-south-1.amazonaws.com/devopsdozo-backend
+
+    env:
+      frontend_ecr_repo: 879381241087.dkr.ecr.ap-south-1.amazonaws.com/devopsdozo-frontend
+      path_frontend: k8s-3-tier-app/app/frontend/
+      backend_ecr_repo: 879381241087.dkr.ecr.ap-south-1.amazonaws.com/devopsdozo-backend
+      path_backend: k8s-3-tier-app/app/backend/ 
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: setup docker
+        uses: some GH action
+
+      - name: setip aws cred
+        uses: aws cred gh 
+        with:
+          AWS_key: ""
+          aws_sect: ""
+
+      - name: login to aws ecr
+        uses: some github action 
+          
+
+      # - name: Build backend
+      #   run: |
+      #   # docker build -t 879381241087.dkr.ecr.ap-south-1.amazonaws.com/devopsdozo-backend:61dff2b756da6bb4d644dc1a460d4cdb0ce9df43 k8s-3-tier-app/app/backend/ 
+      #   docker build -t ${{ env.backend_ecr_repo0 }}:${{ env.tag }} ${{ env.path_backend }}
+
+      #   docker push ${{ env.backend_ecr_repo0 }}:${{ env.tag }} ${{ env.path_backend }}
+
+      # - name: build frontend
+      #   run: |
+      #     # docker build -t 879381241087.dkr.ecr.ap-south-1.amazonaws.com/devopsdozo-backend:61dff2b756da6bb4d644dc1a460d4cdb0ce9df43 k8s-3-tier-app/app/backend/ 
+      #     docker build -t ${{ env.frontend_ecr_repo0 }}:${{ env.tag }} ${{ env.path_frontend }}
+
+      #     docker push ${{ env.frontend_ecr_repo0 }}:${{ env.tag }} ${{ env.path_frontend }}
+      - name: Build services 
+        run: |
+          docker build -t  matrix.service.ecr_repo:${{ env.tag }} matrix.service.path
+
+  
+  deploy:
+    needs: [ build-services ]
+
+
+
+
+
+
+
+
+      
+
+
+
+
+
+      
+
+
+
+
+        
