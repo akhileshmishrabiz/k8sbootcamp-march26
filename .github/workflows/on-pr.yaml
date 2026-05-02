@@ -13,7 +13,7 @@ env:
   # environment_branch: prod
 
 jobs:
-  build-and-push:
+  code-checks:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
