@@ -51,7 +51,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
       
-      - scan-image:
+      -name: scan-image:
         uses: aquasecurity/trivy-action@v1
         with:
           scan-type: "image"
