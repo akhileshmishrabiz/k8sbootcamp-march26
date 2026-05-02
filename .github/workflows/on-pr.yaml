@@ -1,5 +1,5 @@
 ---
-name: 3tier k8s build & deploy
+name: pr checks for 3tier-app
 
 on:
   pull_request:
