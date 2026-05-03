@@ -41,13 +41,15 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-          # role-to-assume: arn:aws:iam::879381241087:role/eks-github-actions-build-role
-          # role-session-name: GitHub_to_AWS_OIDC_MS
+           #### if using aws access keys and secrets
+          # aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          # aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           # aws-region: ${{ env.AWS_REGION }}
+
+          #### if using aws role to assume - OIDC
+          role-to-assume: arn:aws:iam::879381241087:role/GitHubActionsECSDeployRole
+          role-session-name: GitHub_to_AWS_OIDC_3tier
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
