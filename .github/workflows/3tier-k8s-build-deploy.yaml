@@ -55,8 +55,8 @@ jobs:
       - name: Build and push ${{ matrix.service.name }}
         uses: docker/build-push-action@v5
         with:
-          context: ${{ matrix.service.path}}/${{ matrix.service.name }}
-          file: ${{ matrix.service.path}}/${{ matrix.service.name }}/Dockerfile
+          context: ${{ matrix.service.path}}
+          file: Dockerfile
           push: true
           tags: |
             ${{ env.ECR_REGISTRY }}/${{ matrix.service.ecr_repo }}:${{ github.sha }}
