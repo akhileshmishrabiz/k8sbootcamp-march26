@@ -1,9 +1,12 @@
 locals {
   github_repo = [
     { user = "akhileshmishrabiz", repo = "k8s-bootcamp-dec25", branch = "main" },
-    { user = "akhileshmishrabiz", repo = "gthub-action-demo", branch = "main" },
-    { user = "akhileshmishrabiz", repo = "gthub-action-demo", branch = "main" },
+    { user = "akhileshmishrabiz", repo = "k8sbootcamp-march26", branch = "main" },
   ]
+  # GitHub Actions OIDC subject: repo:OWNER/REPO:ref:refs/heads/BRANCH
+  github_oidc_subjects = distinct([
+    for r in local.github_repo : "repo:${r.user}/${r.repo}:ref:refs/heads/${r.branch}"
+  ])
 }
 
 
@@ -22,9 +25,9 @@ resource "aws_iam_openid_connect_provider" "github_actions" {
     "sts.amazonaws.com"
   ]
 
-#   thumbprint_list = [
-#     "6938fd4d98bab03faadb97b34396831e3780aea1"
-#   ]
+  #   thumbprint_list = [
+  #     "6938fd4d98bab03faadb97b34396831e3780aea1"
+  #   ]
 
   tags = {
     Name = "AWS-GH-march26"
@@ -45,8 +48,8 @@ resource "aws_iam_role" "aws-github-oidc-march26" {
         Action = "sts:AssumeRoleWithWebIdentity"
         Condition = {
           StringLike = {
-            "token.actions.githubusercontent.com:sub" : "repo:akhileshmishrabiz/k8sbootcamp-march26:ref:refs/heads/main",
-            "token.actions.githubusercontent.com:aud" : "sts.amazonaws.com"
+            "token.actions.githubusercontent.com:sub" = local.github_oidc_subjects
+            "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
           }
         }
       }
