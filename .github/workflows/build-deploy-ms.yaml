@@ -79,7 +79,7 @@ jobs:
       - name: Build ${{ matrix.service.name }}
         uses: docker/build-push-action@v5
         with:
-          context: ${{ matrix.service.path }}
+          context: microservices-k8s-ecommerce/${{ matrix.service.path }}
           push: false
           load: true
           tags: |
