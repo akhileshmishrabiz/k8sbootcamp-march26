@@ -102,6 +102,9 @@ print_success "notification-service:local built"
 docker build -t frontend:local ./apps/frontend
 print_success "frontend:local built"
 
+docker build -t ms-ecom-seed:latest ./seed-job
+print_success "ms-ecom-seed:latest built"
+
 print_success "All images built successfully"
 
 # ============================================================
@@ -131,6 +134,9 @@ print_success "notification-service loaded"
 
 kind load docker-image frontend:local --name ${CLUSTER_NAME}
 print_success "frontend loaded"
+
+kind load docker-image ms-ecom-seed:latest --name ${CLUSTER_NAME}
+print_success "ms-ecom-seed loaded"
 
 print_success "All images loaded into cluster"
 
@@ -206,14 +212,14 @@ print_info "All services:"
 kubectl get svc -n ${NAMESPACE}
 
 # ============================================================
-# STEP 7: Seed Data
+# STEP 7: Seed Data via Kubernetes Job
 # ============================================================
-print_step "7" "Loading Seed Data"
+print_step "7" "Loading Seed Data via Kubernetes Job"
 
 print_info "Waiting for services to be fully ready..."
 sleep 15
 
-# Seed Users
+# Seed Users first (runs inside user-service pod)
 print_info "Seeding users..."
 USER_POD=$(kubectl get pods -n ${NAMESPACE} -l app=user-service -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
 if [ -n "$USER_POD" ]; then
@@ -222,26 +228,23 @@ if [ -n "$USER_POD" ]; then
         print_info "User seeding skipped (may already exist or script not found)"
 fi
 
-# Seed Products
-print_info "Seeding products via API..."
-API_URL="http://localhost:8080"
+# Delete existing seed job if it exists
+print_info "Cleaning up any existing seed job..."
+kubectl delete job seed-data-job -n ${NAMESPACE} 2>/dev/null || true
 
-products=(
-  '{"name":"iPhone 14 Pro","description":"Latest Apple iPhone with A16 Bionic chip","price":999.99,"stock":50,"category":"Electronics","sku":"ELEC-IPH-001","is_active":true}'
-  '{"name":"Samsung Galaxy S23 Ultra","description":"Premium Android smartphone with 200MP camera","price":1199.99,"stock":35,"category":"Electronics","sku":"ELEC-SAM-001","is_active":true}'
-  '{"name":"MacBook Pro 16-inch","description":"Apple M2 Pro chip, 16GB RAM, 512GB SSD","price":2499.99,"stock":20,"category":"Electronics","sku":"ELEC-MAC-001","is_active":true}'
-  '{"name":"Sony WH-1000XM5","description":"Industry-leading noise canceling headphones","price":399.99,"stock":75,"category":"Electronics","sku":"ELEC-SON-001","is_active":true}'
-  '{"name":"Nike Air Max 270","description":"Running shoes with Max Air unit","price":150.00,"stock":100,"category":"Footwear","sku":"FOOT-NIK-001","is_active":true}'
-)
+# Apply the seed job
+print_info "Applying seed job..."
+kubectl apply -f ./seed-job/seed-job.yaml
 
-success=0
-for product in "${products[@]}"; do
-  result=$(curl -s -w "%{http_code}" -o /dev/null -X POST "$API_URL/api/products" -H "Content-Type: application/json" -d "$product" 2>/dev/null)
-  if [ "$result" = "201" ] || [ "$result" = "200" ]; then
-    ((success++))
-  fi
-done
-print_info "Seeded $success products"
+# Wait for the seed job to complete
+print_info "Waiting for seed job to complete..."
+kubectl wait --for=condition=complete job/seed-data-job -n ${NAMESPACE} --timeout=120s 2>/dev/null && \
+    print_success "Seed job completed successfully" || \
+    print_info "Seed job may still be running"
+
+# Show seed job logs
+print_info "Seed job output:"
+kubectl logs job/seed-data-job -n ${NAMESPACE} 2>/dev/null || true
 
 # ============================================================
 # STEP 8: Final Status

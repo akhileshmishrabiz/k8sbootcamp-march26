@@ -11,18 +11,7 @@ const logger = winston.createLogger({
   ),
   defaultMeta: { service: 'user-service' },
   transports: [
-    new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.colorize(),
-        winston.format.printf(({ timestamp, level, message, ...meta }) => {
-          let msg = `${timestamp} [${level}]: ${message}`;
-          if (Object.keys(meta).length > 0 && meta.service !== 'user-service') {
-            msg += ` ${JSON.stringify(meta)}`;
-          }
-          return msg;
-        })
-      )
-    })
+    new winston.transports.Console()
   ]
 });
 

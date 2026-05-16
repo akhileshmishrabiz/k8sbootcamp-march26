@@ -4,7 +4,9 @@ import logging
 import threading
 from flask import Flask, jsonify
 from flask_cors import CORS
+from prometheus_flask_exporter import PrometheusMetrics
 from dotenv import load_dotenv
+from pythonjsonlogger import jsonlogger
 import pika
 import boto3
 from botocore.exceptions import ClientError
@@ -12,16 +14,20 @@ from email_templates import render_order_confirmation
 
 load_dotenv()
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
-)
+log_level = os.getenv('LOG_LEVEL', 'INFO').upper()
+log_handler = logging.StreamHandler()
+log_handler.setFormatter(jsonlogger.JsonFormatter(
+    '%(asctime)s %(levelname)s %(name)s %(message)s',
+    datefmt='%Y-%m-%dT%H:%M:%SZ',
+    rename_fields={'asctime': 'time', 'levelname': 'level'},
+    static_fields={'service': 'notification-service'},
+))
+logging.basicConfig(level=log_level, handlers=[log_handler], force=True)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 CORS(app)
+metrics = PrometheusMetrics(app)
 
 # AWS SES client
 ses_client = boto3.client(

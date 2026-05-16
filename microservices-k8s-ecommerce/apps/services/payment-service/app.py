@@ -8,15 +8,19 @@ from sqlalchemy import text
 from database import db
 from prometheus_flask_exporter import PrometheusMetrics
 from prometheus_client import Counter, Histogram, Gauge
+from pythonjsonlogger import jsonlogger
 
 load_dotenv()
 
-# Configure logging with JSON format for better parsing
-logging.basicConfig(
-    level=logging.INFO,
-    format='{"time": "%(asctime)s", "level": "%(levelname)s", "service": "payment-service", "message": "%(message)s"}',
-    datefmt='%Y-%m-%dT%H:%M:%SZ'
-)
+log_level = os.getenv('LOG_LEVEL', 'INFO').upper()
+log_handler = logging.StreamHandler()
+log_handler.setFormatter(jsonlogger.JsonFormatter(
+    '%(asctime)s %(levelname)s %(name)s %(message)s',
+    datefmt='%Y-%m-%dT%H:%M:%SZ',
+    rename_fields={'asctime': 'time', 'levelname': 'level'},
+    static_fields={'service': 'payment-service'},
+))
+logging.basicConfig(level=log_level, handlers=[log_handler], force=True)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
