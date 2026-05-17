@@ -56,7 +56,7 @@ jobs:
 
           - name: seed_data
             ecr_repo: ecommerce-seed
-            path: seed-job
+            path: apps/seed-job/
 
     steps:
       - name: Checkout code
