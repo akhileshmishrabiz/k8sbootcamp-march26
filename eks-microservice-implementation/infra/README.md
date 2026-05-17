@@ -1,14 +1,15 @@
 # E-commerce Platform Infra
 
-Terraform modules the `helm-eks/` chart depends on. Apply them in order before `helm install`.
+Terraform modules the `helm-ecommerce/` chart depends on. Apply them in order before `helm install`.
 
 ```
 infra/
 ├── cnpg-operator/    # CloudNativePG operator (cluster-wide CRDs + controller)
-└── vault-secrets/    # Generates random app creds, writes them to Vault, optionally wires ESO
+├── vault-secrets/    # Generates random app creds, writes them to Vault, optionally wires ESO
+└── observability/    # PodMonitors + PrometheusRules + Grafana dashboards for the ecommerce apps
 ```
 
-Vault server and the ESO controller themselves are not here — those are deployed once per cluster from `eks/k8s-services/vault-eso/`.
+Vault server and the ESO controller themselves are not here — those are deployed once per cluster from `eks/k8s-services/vault-eso/`. Same goes for Prometheus/Grafana/Loki — they live in `eks/k8s-services/logging-monitoring/`; `observability/` only adds app-level scrape configs, alerts, and dashboards on top.
 
 ---
 

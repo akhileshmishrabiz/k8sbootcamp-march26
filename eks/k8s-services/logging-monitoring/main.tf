@@ -10,8 +10,8 @@ resource "kubernetes_namespace" "monitoring" {
     name = "monitoring"
 
     labels = {
-      name        = "monitoring"
-      managed-by  = "terraform"
+      name       = "monitoring"
+      managed-by = "terraform"
     }
   }
 }
@@ -46,7 +46,7 @@ resource "helm_release" "kube_prometheus_grafana_stack" {
             }
           }
           # Data retention
-          retention = "15d"
+          retention     = "15d"
           retentionSize = "10GB"
 
           # Storage configuration
@@ -54,7 +54,7 @@ resource "helm_release" "kube_prometheus_grafana_stack" {
             volumeClaimTemplate = {
               spec = {
                 storageClassName = "gp2"
-                accessModes = ["ReadWriteOnce"]
+                accessModes      = ["ReadWriteOnce"]
                 resources = {
                   requests = {
                     storage = "20Gi"
@@ -65,11 +65,11 @@ resource "helm_release" "kube_prometheus_grafana_stack" {
           }
 
           # Service monitor selector - monitor all services in craftista namespace
-          serviceMonitorSelector = {}
+          serviceMonitorSelector          = {}
           serviceMonitorNamespaceSelector = {}
 
           # Pod monitor selector
-          podMonitorSelector = {}
+          podMonitorSelector          = {}
           podMonitorNamespaceSelector = {}
 
           # Additional scrape configs for custom metrics
@@ -94,7 +94,7 @@ resource "helm_release" "kube_prometheus_grafana_stack" {
         enabled = true
 
         # Admin credentials
-        adminPassword = "admin123"  # Change this in production!
+        adminPassword = "admin123" # Change this in production!
 
         # Resource requests and limits
         resources = {
@@ -110,10 +110,10 @@ resource "helm_release" "kube_prometheus_grafana_stack" {
 
         # Persistence for Grafana dashboards and data
         persistence = {
-          enabled = true
+          enabled          = true
           storageClassName = "gp2"
-          accessModes = ["ReadWriteOnce"]
-          size = "10Gi"
+          accessModes      = ["ReadWriteOnce"]
+          size             = "10Gi"
         }
 
         # Grafana service configuration
@@ -125,10 +125,22 @@ resource "helm_release" "kube_prometheus_grafana_stack" {
         # Disable default datasource creation (we'll use the sidecar)
         sidecar = {
           datasources = {
-            enabled = true
+            enabled                  = true
             defaultDatasourceEnabled = true
           }
         }
+
+        # Add Loki as an additional datasource (Prometheus is provisioned by default)
+        additionalDataSources = [
+          {
+            name      = "Loki"
+            type      = "loki"
+            access    = "proxy"
+            url       = "http://loki.monitoring.svc.cluster.local:3100"
+            isDefault = false
+            editable  = true
+          }
+        ]
 
         # Pre-configured dashboards
         # dashboardProviders = {
@@ -163,15 +175,15 @@ resource "helm_release" "kube_prometheus_grafana_stack" {
               revision   = 1
               datasource = "Prometheus"
             }
-        
+
           }
         }
 
         # Grafana ini configuration
         "grafana.ini" = {
           server = {
-            domain   = "grafana.${var.domain_name}"
-            root_url = "https://grafana.${var.domain_name}"
+            domain              = "grafana.${var.domain_name}"
+            root_url            = "https://grafana.${var.domain_name}"
             serve_from_sub_path = false
           }
           analytics = {
@@ -183,36 +195,36 @@ resource "helm_release" "kube_prometheus_grafana_stack" {
       # =======================
       # Alertmanager Configuration
       # =======================
-    #   alertmanager = {
-    #     enabled = true
+      #   alertmanager = {
+      #     enabled = true
 
-    #     alertmanagerSpec = {
-    #       resources = {
-    #         requests = {
-    #           cpu    = "100m"
-    #           memory = "128Mi"
-    #         }
-    #         limits = {
-    #           cpu    = "200m"
-    #           memory = "256Mi"
-    #         }
-    #       }
+      #     alertmanagerSpec = {
+      #       resources = {
+      #         requests = {
+      #           cpu    = "100m"
+      #           memory = "128Mi"
+      #         }
+      #         limits = {
+      #           cpu    = "200m"
+      #           memory = "256Mi"
+      #         }
+      #       }
 
-    #       storage = {
-    #         volumeClaimTemplate = {
-    #           spec = {
-    #             storageClassName = "gp2"
-    #             accessModes = ["ReadWriteOnce"]
-    #             resources = {
-    #               requests = {
-    #                 storage = "5Gi"
-    #               }
-    #             }
-    #           }
-    #         }
-    #       }
-    #     }
-    #   }
+      #       storage = {
+      #         volumeClaimTemplate = {
+      #           spec = {
+      #             storageClassName = "gp2"
+      #             accessModes = ["ReadWriteOnce"]
+      #             resources = {
+      #               requests = {
+      #                 storage = "5Gi"
+      #               }
+      #             }
+      #           }
+      #         }
+      #       }
+      #     }
+      #   }
 
       # =======================
       # Node Exporter
@@ -234,31 +246,31 @@ resource "helm_release" "kube_prometheus_grafana_stack" {
       defaultRules = {
         create = true
         rules = {
-          alertmanager              = true
-          etcd                      = true
-          configReloaders           = true
-          general                   = true
-          k8s                       = true
-          kubeApiserverAvailability = true
-          kubeApiserverSlos         = true
-          kubeControllerManager     = true
-          kubelet                   = true
-          kubeProxy                 = true
-          kubePrometheusGeneral     = true
+          alertmanager                = true
+          etcd                        = true
+          configReloaders             = true
+          general                     = true
+          k8s                         = true
+          kubeApiserverAvailability   = true
+          kubeApiserverSlos           = true
+          kubeControllerManager       = true
+          kubelet                     = true
+          kubeProxy                   = true
+          kubePrometheusGeneral       = true
           kubePrometheusNodeRecording = true
-          kubernetesApps            = true
-          kubernetesResources       = true
-          kubernetesStorage         = true
-          kubernetesSystem          = true
-          kubeSchedulerAlerting     = true
-          kubeSchedulerRecording    = true
-          kubeStateMetrics          = true
-          network                   = true
-          node                      = true
-          nodeExporterAlerting      = true
-          nodeExporterRecording     = true
-          prometheus                = true
-          prometheusOperator        = true
+          kubernetesApps              = true
+          kubernetesResources         = true
+          kubernetesStorage           = true
+          kubernetesSystem            = true
+          kubeSchedulerAlerting       = true
+          kubeSchedulerRecording      = true
+          kubeStateMetrics            = true
+          network                     = true
+          node                        = true
+          nodeExporterAlerting        = true
+          nodeExporterRecording       = true
+          prometheus                  = true
+          prometheusOperator          = true
         }
       }
     })
@@ -279,36 +291,36 @@ resource "kubectl_manifest" "grafana_ingress" {
     metadata = {
       name      = "grafana-ingress"
       namespace = kubernetes_namespace.monitoring.metadata[0].name
-       annotations = {
-      # Create an internet-facing ALB (public access)
-      "alb.ingress.kubernetes.io/scheme" = "internet-facing"
+      annotations = {
+        # Create an internet-facing ALB (public access)
+        "alb.ingress.kubernetes.io/scheme" = "internet-facing"
 
-      # Use IP mode for better compatibility with Fargate and pod networking
-      "alb.ingress.kubernetes.io/target-type" = "ip"
+        # Use IP mode for better compatibility with Fargate and pod networking
+        "alb.ingress.kubernetes.io/target-type" = "ip"
 
-      # Health check path - ALB will check this endpoint for service health
-      "alb.ingress.kubernetes.io/healthcheck-path" = "/"
+        # Health check path - ALB will check this endpoint for service health
+        "alb.ingress.kubernetes.io/healthcheck-path" = "/"
 
-      # SSL/TLS Configuration
-      # Listen on both HTTP (80) and HTTPS (443) ports
-      "alb.ingress.kubernetes.io/listen-ports" = "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
+        # SSL/TLS Configuration
+        # Listen on both HTTP (80) and HTTPS (443) ports
+        "alb.ingress.kubernetes.io/listen-ports" = "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
 
-      # Automatically redirect HTTP traffic to HTTPS
-      "alb.ingress.kubernetes.io/ssl-redirect" = "443"
+        # Automatically redirect HTTP traffic to HTTPS
+        "alb.ingress.kubernetes.io/ssl-redirect" = "443"
 
-      # SSL Security Policy - ensures strong encryption
-      "alb.ingress.kubernetes.io/ssl-policy" = "ELBSecurityPolicy-TLS-1-2-2017-01"
+        # SSL Security Policy - ensures strong encryption
+        "alb.ingress.kubernetes.io/ssl-policy" = "ELBSecurityPolicy-TLS-1-2-2017-01"
 
-      # AWS ACM Certificate ARN - replace with your certificate ARN
-      # NOTE: Ensure this certificate covers your domain and is in the correct AWS region
-      "alb.ingress.kubernetes.io/certificate-arn" = var.acm_cert_arn
+        # AWS ACM Certificate ARN - replace with your certificate ARN
+        # NOTE: Ensure this certificate covers your domain and is in the correct AWS region
+        "alb.ingress.kubernetes.io/certificate-arn" = var.acm_cert_arn
 
-      # HTTP to HTTPS redirect action configuration
-      "alb.ingress.kubernetes.io/actions.ssl-redirect" = "{\"Type\": \"redirect\", \"RedirectConfig\": {\"Protocol\": \"HTTPS\", \"Port\": \"443\", \"StatusCode\": \"HTTP_301\"}}"
+        # HTTP to HTTPS redirect action configuration
+        "alb.ingress.kubernetes.io/actions.ssl-redirect" = "{\"Type\": \"redirect\", \"RedirectConfig\": {\"Protocol\": \"HTTPS\", \"Port\": \"443\", \"StatusCode\": \"HTTP_301\"}}"
 
-      # Group name - all ingresses with the same group share a single ALB
-      "alb.ingress.kubernetes.io/group.name" = "k8sbatch-shared-alb"
-    }
+        # Group name - all ingresses with the same group share a single ALB
+        "alb.ingress.kubernetes.io/group.name" = "k8sbatch-shared-alb"
+      }
 
       labels = {
         app        = "grafana"
@@ -319,7 +331,7 @@ resource "kubectl_manifest" "grafana_ingress" {
       ingressClassName = "alb"
       tls = [
         {
-          hosts = ["grafana.${var.domain_name}"]
+          hosts      = ["grafana.${var.domain_name}"]
           secretName = "grafana-tls"
         }
       ]
@@ -353,6 +365,98 @@ resource "kubectl_manifest" "grafana_ingress" {
 }
 
 # ============================================================================
+# Loki - Log aggregation (with Promtail as the log collector)
+# ============================================================================
+resource "helm_release" "loki" {
+  name       = "loki"
+  repository = "https://grafana.github.io/helm-charts"
+  chart      = "loki-stack"
+  namespace  = kubernetes_namespace.monitoring.metadata[0].name
+  version    = "2.10.2"
+
+  timeout = 600
+
+  values = [
+    yamlencode({
+      loki = {
+        enabled = true
+
+        persistence = {
+          enabled          = true
+          storageClassName = "gp2"
+          accessModes      = ["ReadWriteOnce"]
+          size             = "20Gi"
+        }
+
+        config = {
+          table_manager = {
+            retention_deletes_enabled = true
+            retention_period          = "168h"
+          }
+        }
+
+        resources = {
+          requests = {
+            cpu    = "200m"
+            memory = "512Mi"
+          }
+          limits = {
+            cpu    = "500m"
+            memory = "1Gi"
+          }
+        }
+
+        service = {
+          type = "ClusterIP"
+          port = 3100
+        }
+      }
+
+      promtail = {
+        enabled = true
+
+        config = {
+          clients = [
+            {
+              url = "http://loki:3100/loki/api/v1/push"
+            }
+          ]
+        }
+
+        resources = {
+          requests = {
+            cpu    = "100m"
+            memory = "128Mi"
+          }
+          limits = {
+            cpu    = "200m"
+            memory = "256Mi"
+          }
+        }
+      }
+
+      # We use Grafana from kube-prometheus-stack; disable bundled one
+      grafana = {
+        enabled = false
+      }
+
+      prometheus = {
+        enabled = false
+      }
+
+      fluent-bit = {
+        enabled = false
+      }
+    })
+  ]
+
+  depends_on = [
+    kubernetes_namespace.monitoring,
+    helm_release.kube_prometheus_grafana_stack,
+  ]
+}
+
+# ============================================================================
 # Ingress for Prometheus UI (Optional - for debugging)
 # ============================================================================
 resource "kubectl_manifest" "prometheus_ingress" {
@@ -362,36 +466,36 @@ resource "kubectl_manifest" "prometheus_ingress" {
     metadata = {
       name      = "prometheus-ingress"
       namespace = kubernetes_namespace.monitoring.metadata[0].name
-     annotations = {
-      # Create an internet-facing ALB (public access)
-      "alb.ingress.kubernetes.io/scheme" = "internet-facing"
+      annotations = {
+        # Create an internet-facing ALB (public access)
+        "alb.ingress.kubernetes.io/scheme" = "internet-facing"
 
-      # Use IP mode for better compatibility with Fargate and pod networking
-      "alb.ingress.kubernetes.io/target-type" = "ip"
+        # Use IP mode for better compatibility with Fargate and pod networking
+        "alb.ingress.kubernetes.io/target-type" = "ip"
 
-      # Health check path - ALB will check this endpoint for service health
-      "alb.ingress.kubernetes.io/healthcheck-path" = "/"
+        # Health check path - ALB will check this endpoint for service health
+        "alb.ingress.kubernetes.io/healthcheck-path" = "/"
 
-      # SSL/TLS Configuration
-      # Listen on both HTTP (80) and HTTPS (443) ports
-      "alb.ingress.kubernetes.io/listen-ports" = "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
+        # SSL/TLS Configuration
+        # Listen on both HTTP (80) and HTTPS (443) ports
+        "alb.ingress.kubernetes.io/listen-ports" = "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
 
-      # Automatically redirect HTTP traffic to HTTPS
-      "alb.ingress.kubernetes.io/ssl-redirect" = "443"
+        # Automatically redirect HTTP traffic to HTTPS
+        "alb.ingress.kubernetes.io/ssl-redirect" = "443"
 
-      # SSL Security Policy - ensures strong encryption
-      "alb.ingress.kubernetes.io/ssl-policy" = "ELBSecurityPolicy-TLS-1-2-2017-01"
+        # SSL Security Policy - ensures strong encryption
+        "alb.ingress.kubernetes.io/ssl-policy" = "ELBSecurityPolicy-TLS-1-2-2017-01"
 
-      # AWS ACM Certificate ARN - replace with your certificate ARN
-      # NOTE: Ensure this certificate covers your domain and is in the correct AWS region
-      "alb.ingress.kubernetes.io/certificate-arn" = var.acm_cert_arn
+        # AWS ACM Certificate ARN - replace with your certificate ARN
+        # NOTE: Ensure this certificate covers your domain and is in the correct AWS region
+        "alb.ingress.kubernetes.io/certificate-arn" = var.acm_cert_arn
 
-      # HTTP to HTTPS redirect action configuration
-      "alb.ingress.kubernetes.io/actions.ssl-redirect" = "{\"Type\": \"redirect\", \"RedirectConfig\": {\"Protocol\": \"HTTPS\", \"Port\": \"443\", \"StatusCode\": \"HTTP_301\"}}"
+        # HTTP to HTTPS redirect action configuration
+        "alb.ingress.kubernetes.io/actions.ssl-redirect" = "{\"Type\": \"redirect\", \"RedirectConfig\": {\"Protocol\": \"HTTPS\", \"Port\": \"443\", \"StatusCode\": \"HTTP_301\"}}"
 
-      # Group name - all ingresses with the same group share a single ALB
-      "alb.ingress.kubernetes.io/group.name" = "k8sbatch-shared-alb"
-    }
+        # Group name - all ingresses with the same group share a single ALB
+        "alb.ingress.kubernetes.io/group.name" = "k8sbatch-shared-alb"
+      }
 
       labels = {
         app        = "prometheus"
@@ -402,7 +506,7 @@ resource "kubectl_manifest" "prometheus_ingress" {
       ingressClassName = "alb"
       tls = [
         {
-          hosts = ["prometheus.${var.domain_name}"]
+          hosts      = ["prometheus.${var.domain_name}"]
           secretName = "prometheus-tls"
         }
       ]

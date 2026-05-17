@@ -6,11 +6,11 @@ variable "region" {
   default = "ap-south-1"
 }
 
-# Vault URL terraform talks to. Default assumes Vault is port-forwarded:
-#   kubectl port-forward -n vault svc/vault 8200:8200
+# Vault URL terraform talks to. Defaults to the public ALB at vault.livingdevops.org
+# (deployed by eks/k8s-services/vault-eso/). Override for port-forward or other setups.
 variable "vault_addr" {
-  description = "Vault server address terraform writes secrets to (e.g. http://localhost:8200 with port-forward)"
-  default     = "http://localhost:8200"
+  description = "Vault server address terraform writes secrets to"
+  default     = "https://vault.livingdevops.org"
 }
 
 variable "vault_token" {

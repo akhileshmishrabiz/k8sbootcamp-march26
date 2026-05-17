@@ -215,3 +215,6 @@ __marimo__/
 *.tfvars
 *.tfvars.json
 crash.log
+
+node_modules
+node_modules/*

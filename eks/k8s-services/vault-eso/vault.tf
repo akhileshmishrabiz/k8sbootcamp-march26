@@ -62,16 +62,26 @@ resource "kubernetes_ingress_v1" "vault" {
     namespace = kubernetes_namespace_v1.vault.metadata[0].name
 
     annotations = {
-      "alb.ingress.kubernetes.io/scheme"           = "internet-facing"
-      "alb.ingress.kubernetes.io/target-type"      = "ip"
-      "alb.ingress.kubernetes.io/healthcheck-path" = "/v1/sys/health?standbyok=true&uninitcode=200"
-      "alb.ingress.kubernetes.io/listen-ports"     = "[{\"HTTP\": 80}]"
-      "alb.ingress.kubernetes.io/group.name"       = "k8sbatch-shared-alb"
+      "alb.ingress.kubernetes.io/scheme"               = "internet-facing"
+      "alb.ingress.kubernetes.io/target-type"          = "ip"
+      "alb.ingress.kubernetes.io/healthcheck-path"     = "/v1/sys/health?standbyok=true&uninitcode=200"
+      "alb.ingress.kubernetes.io/listen-ports"         = "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
+      "alb.ingress.kubernetes.io/ssl-redirect"         = "443"
+      "alb.ingress.kubernetes.io/ssl-policy"           = "ELBSecurityPolicy-TLS-1-2-2017-01"
+      "alb.ingress.kubernetes.io/certificate-arn"      = var.acm_cert_arn
+      "alb.ingress.kubernetes.io/actions.ssl-redirect" = "{\"Type\": \"redirect\", \"RedirectConfig\": {\"Protocol\": \"HTTPS\", \"Port\": \"443\", \"StatusCode\": \"HTTP_301\"}}"
+      "alb.ingress.kubernetes.io/group.name"           = "k8sbatch-shared-alb"
     }
   }
 
   spec {
     ingress_class_name = "alb"
+
+    tls {
+      hosts = [
+        "vault.${var.domain_name}"
+      ]
+    }
 
     rule {
       host = "vault.${var.domain_name}"
