@@ -2,7 +2,7 @@
 global:
   namespace: ecommerce
   environment: production
-  imagePullPolicy: IfNotPresent
+  imagePullPolicy: Always
   storageClass: gp2
 
 # Redis configuration (password sourced from ESO-managed redis-credentials secret)
@@ -189,3 +189,22 @@ ingress:
   className: alb
   groupName: k8sbatch-shared-alb
   host: shop.livingdevops.org
+
+# Seed Job - runs as a Helm post-install/post-upgrade hook to seed product
+# data through the api-gateway. An initContainer waits for the gateway/
+# product-service to be reachable so the Job doesn't race the rest of the chart.
+seedJob:
+  enabled: true
+  image: 879381241087.dkr.ecr.ap-south-1.amazonaws.com/ecommerce-seed:latest
+  waitImage: busybox:1.36
+  waitAttempts: 60
+  waitSleepSeconds: 5
+  backoffLimit: 5
+  ttlSecondsAfterFinished: 300
+  resources:
+    requests:
+      cpu: 25m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
