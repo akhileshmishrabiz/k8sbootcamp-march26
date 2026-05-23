@@ -50,3 +50,34 @@ Namespace
 {{- define "ecommerce.namespace" -}}
 {{- .Values.global.namespace }}
 {{- end }}
+
+{{/*
+OpenTelemetry env vars (rendered only when .Values.tracing.enabled).
+Usage: pass a dict with `serviceName`:
+    {{- include "ecommerce.otelEnv" (dict "root" . "serviceName" "order-service") | nindent 12 }}
+*/}}
+{{- define "ecommerce.otelEnv" -}}
+{{- $root := .root -}}
+{{- if $root.Values.tracing.enabled }}
+- name: OTEL_SERVICE_NAME
+  value: {{ .serviceName | quote }}
+- name: OTEL_EXPORTER_OTLP_ENDPOINT
+  value: {{ $root.Values.tracing.endpoint | quote }}
+- name: OTEL_EXPORTER_OTLP_PROTOCOL
+  value: "http/protobuf"
+- name: OTEL_TRACES_EXPORTER
+  value: "otlp"
+- name: OTEL_METRICS_EXPORTER
+  value: "none"
+- name: OTEL_LOGS_EXPORTER
+  value: "none"
+- name: OTEL_PROPAGATORS
+  value: "tracecontext,baggage"
+- name: OTEL_TRACES_SAMPLER
+  value: "parentbased_traceidratio"
+- name: OTEL_TRACES_SAMPLER_ARG
+  value: {{ $root.Values.tracing.samplerArg | quote }}
+- name: OTEL_RESOURCE_ATTRIBUTES
+  value: {{ printf "deployment.environment=%s,service.namespace=ecommerce,k8s.namespace.name=%s" $root.Values.tracing.environment (include "ecommerce.namespace" $root) | quote }}
+{{- end }}
+{{- end }}

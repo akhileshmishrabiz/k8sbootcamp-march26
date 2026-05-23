@@ -1,15 +1,17 @@
 import os
 import json
 import logging
+import smtplib
 import threading
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.utils import formataddr, make_msgid
 from flask import Flask, jsonify
 from flask_cors import CORS
 from prometheus_flask_exporter import PrometheusMetrics
 from dotenv import load_dotenv
 from pythonjsonlogger import jsonlogger
 import pika
-import boto3
-from botocore.exceptions import ClientError
 from email_templates import render_order_confirmation
 
 load_dotenv()
@@ -29,41 +31,39 @@ app = Flask(__name__)
 CORS(app)
 metrics = PrometheusMetrics(app)
 
-# AWS SES client
-ses_client = boto3.client(
-    'ses',
-    region_name=os.getenv('AWS_REGION', 'us-east-1'),
-    aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
-    aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY')
-)
-
-SENDER_EMAIL = os.getenv('SES_SENDER_EMAIL', 'noreply@example.com')
-SENDER_NAME = os.getenv('SES_SENDER_NAME', 'E-Commerce Platform')
+SMTP_HOST = os.getenv('SMTP_HOST', 'mailpit')
+SMTP_PORT = int(os.getenv('SMTP_PORT', '1025'))
+SMTP_USER = os.getenv('SMTP_USER', '')
+SMTP_PASSWORD = os.getenv('SMTP_PASSWORD', '')
+SMTP_USE_TLS = os.getenv('SMTP_USE_TLS', 'false').lower() == 'true'
+SENDER_EMAIL = os.getenv('SMTP_SENDER_EMAIL', 'noreply@ecommerce.local')
+SENDER_NAME = os.getenv('SMTP_SENDER_NAME', 'E-Commerce Platform')
 
 def send_email(to_email, subject, html_body, text_body=None):
-    """Send email using AWS SES"""
+    """Send email via SMTP (defaults to Mailpit in-cluster sink)"""
     try:
         if text_body is None:
             text_body = html_body
 
-        response = ses_client.send_email(
-            Source=f'{SENDER_NAME} <{SENDER_EMAIL}>',
-            Destination={'ToAddresses': [to_email]},
-            Message={
-                'Subject': {'Data': subject, 'Charset': 'UTF-8'},
-                'Body': {
-                    'Text': {'Data': text_body, 'Charset': 'UTF-8'},
-                    'Html': {'Data': html_body, 'Charset': 'UTF-8'}
-                }
-            }
-        )
-        logger.info(f'Email sent to {to_email}, Message ID: {response["MessageId"]}')
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = subject
+        msg['From'] = formataddr((SENDER_NAME, SENDER_EMAIL))
+        msg['To'] = to_email
+        msg['Message-ID'] = make_msgid(domain='ecommerce.local')
+        msg.attach(MIMEText(text_body, 'plain', 'utf-8'))
+        msg.attach(MIMEText(html_body, 'html', 'utf-8'))
+
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as server:
+            if SMTP_USE_TLS:
+                server.starttls()
+            if SMTP_USER:
+                server.login(SMTP_USER, SMTP_PASSWORD)
+            server.sendmail(SENDER_EMAIL, [to_email], msg.as_string())
+
+        logger.info(f'Email sent to {to_email} via {SMTP_HOST}:{SMTP_PORT}, Message-ID: {msg["Message-ID"]}')
         return True
-    except ClientError as e:
-        logger.error(f'Failed to send email to {to_email}: {e.response["Error"]["Message"]}')
-        return False
     except Exception as e:
-        logger.error(f'Unexpected error sending email: {str(e)}')
+        logger.error(f'Failed to send email to {to_email}: {str(e)}')
         return False
 
 def process_order_event(event_data):

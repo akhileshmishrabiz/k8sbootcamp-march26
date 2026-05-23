@@ -16,6 +16,10 @@ spec:
     metadata:
       labels:
         app: notification-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "{{ .Values.services.notificationService.port }}"
     spec:
       containers:
         - name: notification-service
@@ -42,22 +46,17 @@ spec:
                 secretKeyRef:
                   name: rabbitmq-credentials
                   key: RABBITMQ_DEFAULT_PASS
-            - name: AWS_ACCESS_KEY_ID
-              valueFrom:
-                secretKeyRef:
-                  name: aws-credentials
-                  key: AWS_ACCESS_KEY_ID
-            - name: AWS_SECRET_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: aws-credentials
-                  key: AWS_SECRET_ACCESS_KEY
-            - name: AWS_REGION
-              value: {{ .Values.services.notificationService.aws.region }}
-            - name: SES_SENDER_EMAIL
-              value: {{ .Values.services.notificationService.aws.sesSenderEmail }}
+            - name: SMTP_HOST
+              value: {{ .Values.services.notificationService.smtp.host | quote }}
+            - name: SMTP_PORT
+              value: {{ .Values.services.notificationService.smtp.port | quote }}
+            - name: SMTP_SENDER_EMAIL
+              value: {{ .Values.services.notificationService.smtp.senderEmail | quote }}
+            - name: SMTP_SENDER_NAME
+              value: {{ .Values.services.notificationService.smtp.senderName | quote }}
             - name: LOG_LEVEL
               value: {{ .Values.services.notificationService.logLevel }}
+            {{- include "ecommerce.otelEnv" (dict "root" $ "serviceName" "notification-service") | nindent 12 }}
           readinessProbe:
             httpGet:
               path: /health

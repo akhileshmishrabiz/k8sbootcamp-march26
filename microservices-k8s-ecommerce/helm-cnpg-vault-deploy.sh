@@ -93,6 +93,10 @@ nodes:
       - containerPort: 30030
         hostPort: 3030
         protocol: TCP
+      # Loki (optional)
+      - containerPort: 30100
+        hostPort: 3100
+        protocol: TCP
 EOF
 
 if kind get clusters 2>/dev/null | grep -q "^${CLUSTER_NAME}$"; then
@@ -235,10 +239,8 @@ if command -v vault >/dev/null 2>&1; then
         key_secret="placeholder_secret_key" \
         webhook_secret="whsec_placeholder"
 
-    print_info "Writing AWS secrets..."
-    vault kv put secret/ecommerce/aws \
-        access_key_id="AKIAIOSFODNN7EXAMPLE" \
-        secret_access_key="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+    # Notification service uses an in-cluster Mailpit SMTP sink (no AWS SES).
+    # SMTP host/port/sender are wired via Helm values, not Vault.
 
 else
     print_info "Vault CLI not found, using kubectl exec..."
@@ -262,10 +264,6 @@ else
         key_id="rzp_test_placeholder" \
         key_secret="placeholder_secret_key" \
         webhook_secret="whsec_placeholder"
-
-    kubectl exec -n vault vault-0 -- vault kv put secret/ecommerce/aws \
-        access_key_id="AKIAIOSFODNN7EXAMPLE" \
-        secret_access_key="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
 fi
 
 # Kill port-forward
@@ -299,7 +297,7 @@ sleep 10
 
 # Verify secrets were created
 print_info "Verifying synced secrets..."
-for secret in db-credentials redis-credentials rabbitmq-credentials app-secrets aws-credentials; do
+for secret in db-credentials redis-credentials rabbitmq-credentials app-secrets; do
     if kubectl get secret ${secret} -n ${NAMESPACE} >/dev/null 2>&1; then
         print_success "Secret '${secret}' synced"
     else
@@ -421,9 +419,37 @@ done
 print_success "Services deployed"
 
 # ============================================================
-# STEP 12: Verify Deployment
+# STEP 12: Deploying Monitoring Stack (Prometheus + Grafana + Loki + Promtail)
 # ============================================================
-print_step "12" "Verifying Deployment"
+print_step "12" "Deploying Monitoring Stack"
+
+if [ -d "./monitor" ]; then
+    print_info "Applying monitoring manifests from ./monitor..."
+    kubectl apply -f ./monitor/namespace.yaml
+    kubectl apply -f ./monitor/
+    print_success "Monitoring manifests applied"
+
+    print_info "Waiting for Prometheus..."
+    kubectl wait --for=condition=available deployment/prometheus -n monitoring --timeout=180s 2>/dev/null || true
+
+    print_info "Waiting for Grafana..."
+    kubectl wait --for=condition=available deployment/grafana -n monitoring --timeout=180s 2>/dev/null || true
+
+    print_info "Waiting for Loki..."
+    kubectl wait --for=condition=available deployment/loki -n monitoring --timeout=180s 2>/dev/null || true
+
+    print_info "Waiting for Promtail..."
+    kubectl rollout status daemonset/promtail -n monitoring --timeout=180s 2>/dev/null || true
+
+    print_success "Monitoring stack deployed"
+else
+    print_info "./monitor directory not found, skipping monitoring stack"
+fi
+
+# ============================================================
+# STEP 13: Verify Deployment
+# ============================================================
+print_step "13" "Verifying Deployment"
 
 echo -e "${YELLOW}Vault Status:${NC}"
 kubectl get pods -n vault
@@ -432,7 +458,7 @@ echo -e "\n${YELLOW}External Secrets Status:${NC}"
 kubectl get externalsecrets -n ${NAMESPACE}
 
 echo -e "\n${YELLOW}Synced Kubernetes Secrets:${NC}"
-kubectl get secrets -n ${NAMESPACE} | grep -E "db-credentials|redis-credentials|rabbitmq-credentials|app-secrets|aws-credentials"
+kubectl get secrets -n ${NAMESPACE} | grep -E "db-credentials|redis-credentials|rabbitmq-credentials|app-secrets"
 
 echo -e "\n${YELLOW}CNPG Clusters:${NC}"
 kubectl get clusters -n ${NAMESPACE}
@@ -440,10 +466,13 @@ kubectl get clusters -n ${NAMESPACE}
 echo -e "\n${YELLOW}All Pods:${NC}"
 kubectl get pods -n ${NAMESPACE}
 
+echo -e "\n${YELLOW}Monitoring Stack:${NC}"
+kubectl get pods -n monitoring 2>/dev/null || echo "(no monitoring namespace)"
+
 # ============================================================
-# STEP 13: Seed Data via Kubernetes Job
+# STEP 14: Seed Data via Kubernetes Job
 # ============================================================
-print_step "13" "Loading Seed Data via Kubernetes Job"
+print_step "14" "Loading Seed Data via Kubernetes Job"
 
 print_info "Waiting for services to stabilize..."
 sleep 20
@@ -476,13 +505,13 @@ print_info "Seed job output:"
 kubectl logs job/seed-data-job -n ${NAMESPACE} 2>/dev/null || true
 
 # ============================================================
-# STEP 14: Final Status
+# STEP 15: Final Status
 # ============================================================
-print_step "14" "Deployment Complete!"
+print_step "15" "Deployment Complete!"
 
 echo -e "${GREEN}"
 echo "============================================================"
-echo "   VAULT + ESO + CNPG DEPLOYMENT SUCCESSFUL!"
+echo "   VAULT + ESO + CNPG + MONITORING DEPLOYMENT SUCCESSFUL!"
 echo "============================================================"
 echo -e "${NC}"
 
@@ -491,6 +520,13 @@ echo "  Frontend:        http://localhost:4000"
 echo "  API Gateway:     http://localhost:9080"
 echo "  Vault UI:        http://localhost:8200  (Token: root)"
 echo "  RabbitMQ UI:     http://localhost:16672"
+echo "  Grafana:         http://localhost:3030  (admin/admin)"
+echo "  Prometheus:      http://localhost:9090"
+echo "  Loki:            http://localhost:3100  (queried via Grafana)"
+echo "  Mailpit UI:      http://localhost:8025  (SMTP sink for notification-service)"
+echo ""
+echo -e "${YELLOW}Port-forward Mailpit (run in another terminal):${NC}"
+echo "  kubectl port-forward -n ${NAMESPACE} svc/mailpit 8025:8025"
 echo ""
 
 echo -e "${YELLOW}Secrets Management:${NC}"
@@ -524,7 +560,15 @@ echo "  kubectl get clusters -n ${NAMESPACE}"
 echo "  kubectl describe cluster products -n ${NAMESPACE}"
 echo ""
 
+echo -e "${YELLOW}Monitoring Commands:${NC}"
+echo "  kubectl get pods -n monitoring"
+echo "  kubectl logs -n monitoring deploy/grafana"
+echo "  # Grafana login: admin / admin (change on first login)"
+echo "  # Loki is wired as a Grafana datasource in ${YELLOW}./monitor/grafana-deployment.yaml${NC}"
+echo ""
+
 echo -e "${YELLOW}Cleanup:${NC}"
+echo "  kubectl delete -f ./monitor/ 2>/dev/null"
 echo "  helm uninstall ${RELEASE_NAME} -n ${NAMESPACE}"
 echo "  helm uninstall vault -n vault"
 echo "  helm uninstall external-secrets -n external-secrets"
@@ -542,5 +586,5 @@ fi
 
 echo ""
 echo -e "${GREEN}============================================================${NC}"
-echo -e "${GREEN}  Vault + ESO + CNPG deployment completed!${NC}"
+echo -e "${GREEN}  Vault + ESO + CNPG + Monitoring deployment completed!${NC}"
 echo -e "${GREEN}============================================================${NC}"

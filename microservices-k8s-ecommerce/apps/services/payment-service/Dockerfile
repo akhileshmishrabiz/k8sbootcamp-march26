@@ -27,4 +27,6 @@ EXPOSE 8005
 # Kubernetes probe example: httpGet on /health endpoint
 # For local testing, use: curl http://localhost:8005/health
 
-CMD ["python", "app.py"]
+# opentelemetry-instrument is a no-op when OTEL_EXPORTER_OTLP_ENDPOINT is unset,
+# so the same image works whether tracing is enabled or not.
+CMD ["opentelemetry-instrument", "python", "app.py"]

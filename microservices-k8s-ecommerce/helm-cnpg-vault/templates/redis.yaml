@@ -16,6 +16,10 @@ spec:
     metadata:
       labels:
         app: redis
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "9121"
     spec:
       containers:
         - name: redis
@@ -47,6 +51,26 @@ spec:
             limits:
               cpu: {{ .Values.redis.resources.limits.cpu }}
               memory: {{ .Values.redis.resources.limits.memory }}
+        - name: redis-exporter
+          image: oliver006/redis_exporter:v1.62.0-alpine
+          env:
+            - name: REDIS_ADDR
+              value: "redis://localhost:6379"
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-credentials
+                  key: REDIS_PASSWORD
+          ports:
+            - containerPort: 9121
+              name: metrics
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 64Mi
 ---
 apiVersion: v1
 kind: Service
@@ -61,4 +85,7 @@ spec:
     app: redis
   ports:
     - port: 6379
+      name: redis
+    - port: 9121
+      name: metrics
 {{- end }}

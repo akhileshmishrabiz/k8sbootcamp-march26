@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"order-service/config"
 	"order-service/database"
 	"order-service/messaging"
 	"order-service/middleware"
 	"order-service/routes"
+	"order-service/telemetry"
 	"os"
 
 	"github.com/gin-contrib/cors"
@@ -14,6 +16,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 )
 
 func init() {
@@ -42,6 +45,10 @@ func main() {
 	// Load configuration
 	cfg := config.LoadConfig()
 
+	// Initialize OpenTelemetry (no-op when OTEL_EXPORTER_OTLP_ENDPOINT unset)
+	shutdownTracing := telemetry.Init(context.Background(), "order-service")
+	defer shutdownTracing(context.Background())
+
 	// Connect to database
 	db := database.Connect(cfg)
 
@@ -61,6 +68,9 @@ func main() {
 	}
 
 	router := gin.Default()
+	// otelgin produces a span per request and reads W3C trace context headers
+	// from upstream — must come before any handler.
+	router.Use(otelgin.Middleware("order-service"))
 
 	// Configure CORS
 	corsConfig := cors.DefaultConfig()

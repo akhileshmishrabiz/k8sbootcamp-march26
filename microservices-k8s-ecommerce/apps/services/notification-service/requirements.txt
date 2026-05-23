@@ -3,8 +3,14 @@ Flask-CORS==4.0.0
 prometheus-flask-exporter==0.23.0
 python-dotenv==1.0.0
 pika==1.3.2
-boto3==1.34.10
 jinja2==3.1.2
+
+# OpenTelemetry — active only when OTEL_EXPORTER_OTLP_ENDPOINT is set.
+opentelemetry-distro==0.50b0
+opentelemetry-exporter-otlp-proto-http==1.29.0
+opentelemetry-instrumentation-flask==0.50b0
+opentelemetry-instrumentation-pika==0.50b0
+opentelemetry-instrumentation-logging==0.50b0
 python-json-logger==2.0.7
 
 # Testing

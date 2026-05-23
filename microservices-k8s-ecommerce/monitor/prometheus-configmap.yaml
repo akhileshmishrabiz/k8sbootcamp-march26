@@ -55,6 +55,48 @@ data:
             target_label: __metrics_path__
             replacement: /api/v1/nodes/${1}/proxy/metrics
 
+      # CloudNativePG postgres clusters - built-in exporter on :9187
+      - job_name: 'cnpg-postgres'
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_cnpg_io_podRole]
+            action: keep
+            regex: instance
+          - source_labels: [__meta_kubernetes_pod_container_port_name]
+            action: keep
+            regex: metrics
+          - source_labels: [__meta_kubernetes_pod_label_cnpg_io_cluster]
+            action: replace
+            target_label: cluster
+          - source_labels: [__meta_kubernetes_pod_label_cnpg_io_instanceRole]
+            action: replace
+            target_label: role
+          - source_labels: [__meta_kubernetes_namespace]
+            action: replace
+            target_label: kubernetes_namespace
+          - source_labels: [__meta_kubernetes_pod_name]
+            action: replace
+            target_label: kubernetes_pod_name
+
+      # cAdvisor - container CPU/memory metrics from the kubelet
+      - job_name: 'kubernetes-cadvisor'
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        kubernetes_sd_configs:
+          - role: node
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_node_label_(.+)
+          - target_label: __address__
+            replacement: kubernetes.default.svc:443
+          - source_labels: [__meta_kubernetes_node_name]
+            regex: (.+)
+            target_label: __metrics_path__
+            replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
+
       # Kubernetes pods with prometheus.io annotations
       - job_name: 'kubernetes-pods'
         kubernetes_sd_configs:
@@ -80,6 +122,11 @@ data:
           - source_labels: [__meta_kubernetes_pod_name]
             action: replace
             target_label: kubernetes_pod_name
+          # Normalize: copy pod `app` label to `service` so dashboards aggregating
+          # by (service) work across services with inconsistent metric labels.
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            action: replace
+            target_label: service
 
       # Kubernetes services with prometheus.io annotations
       - job_name: 'kubernetes-services'

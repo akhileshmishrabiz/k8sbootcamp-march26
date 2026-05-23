@@ -53,11 +53,7 @@ vault kv put secret/ecommerce/razorpay \
     key_secret="placeholder_secret_key" \
     webhook_secret="whsec_placeholder"
 
-# AWS credentials (placeholder for lab)
-echo "Writing AWS secrets..."
-vault kv put secret/ecommerce/aws \
-    access_key_id="AKIAIOSFODNN7EXAMPLE" \
-    secret_access_key="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+# notification-service uses an in-cluster Mailpit SMTP sink — no AWS/SES creds.
 
 echo ""
 echo "All secrets written to Vault!"

@@ -26,7 +26,13 @@
     "jsonwebtoken": "^9.0.2",
     "redis": "^4.6.11",
     "winston": "^3.11.0",
-    "prom-client": "^15.1.0"
+    "prom-client": "^15.1.0",
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/auto-instrumentations-node": "^0.55.0",
+    "@opentelemetry/sdk-node": "^0.55.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.55.0",
+    "@opentelemetry/resources": "^1.28.0",
+    "@opentelemetry/semantic-conventions": "^1.28.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.2",

@@ -16,6 +16,10 @@ spec:
     metadata:
       labels:
         app: payment-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "{{ .Values.services.paymentService.port }}"
     spec:
       containers:
         - name: payment-service
@@ -68,6 +72,7 @@ spec:
               value: http://order-service:{{ .Values.services.orderService.port }}
             - name: LOG_LEVEL
               value: {{ .Values.services.paymentService.logLevel }}
+            {{- include "ecommerce.otelEnv" (dict "root" $ "serviceName" "payment-service") | nindent 12 }}
           readinessProbe:
             httpGet:
               path: /health

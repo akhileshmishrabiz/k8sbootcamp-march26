@@ -146,57 +146,46 @@ class TestOrderEventProcessing:
 
 
 class TestEmailSending:
-    """Test email sending functionality"""
+    """Test SMTP email sending functionality"""
 
     def test_send_email_success(self):
-        """Should return True on successful email send"""
-        mock_ses_client = MagicMock()
-        mock_ses_client.send_email.return_value = {'MessageId': 'test-message-id'}
+        """Should return True on successful SMTP send"""
+        mock_smtp = MagicMock()
+        mock_smtp.__enter__.return_value = mock_smtp
 
-        def send_email(client, to_email, subject, body):
+        def send_email(smtp_client, to_email, subject, body):
             try:
-                response = client.send_email(
-                    Source='noreply@example.com',
-                    Destination={'ToAddresses': [to_email]},
-                    Message={
-                        'Subject': {'Data': subject},
-                        'Body': {'Html': {'Data': body}}
-                    }
-                )
+                with smtp_client as server:
+                    server.sendmail('noreply@ecommerce.local', [to_email], body)
                 return True
             except Exception:
                 return False
 
         result = send_email(
-            mock_ses_client,
+            mock_smtp,
             'test@example.com',
             'Order Confirmation',
             '<html><body>Test</body></html>'
         )
         assert result is True
-        mock_ses_client.send_email.assert_called_once()
+        mock_smtp.sendmail.assert_called_once()
 
     def test_send_email_failure(self):
-        """Should return False on email send failure"""
-        mock_ses_client = MagicMock()
-        mock_ses_client.send_email.side_effect = Exception('SES Error')
+        """Should return False when SMTP raises"""
+        mock_smtp = MagicMock()
+        mock_smtp.__enter__.return_value = mock_smtp
+        mock_smtp.sendmail.side_effect = Exception('SMTP connection refused')
 
-        def send_email(client, to_email, subject, body):
+        def send_email(smtp_client, to_email, subject, body):
             try:
-                client.send_email(
-                    Source='noreply@example.com',
-                    Destination={'ToAddresses': [to_email]},
-                    Message={
-                        'Subject': {'Data': subject},
-                        'Body': {'Html': {'Data': body}}
-                    }
-                )
+                with smtp_client as server:
+                    server.sendmail('noreply@ecommerce.local', [to_email], body)
                 return True
             except Exception:
                 return False
 
         result = send_email(
-            mock_ses_client,
+            mock_smtp,
             'test@example.com',
             'Order Confirmation',
             '<html><body>Test</body></html>'

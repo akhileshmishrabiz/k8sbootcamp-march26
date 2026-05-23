@@ -16,6 +16,10 @@ spec:
     metadata:
       labels:
         app: user-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "{{ .Values.services.userService.port }}"
     spec:
       containers:
         - name: user-service
@@ -53,6 +57,7 @@ spec:
               value: {{ .Values.services.userService.jwtExpiry | quote }}
             - name: LOG_LEVEL
               value: {{ .Values.services.userService.logLevel }}
+            {{- include "ecommerce.otelEnv" (dict "root" $ "serviceName" "user-service") | nindent 12 }}
           readinessProbe:
             httpGet:
               path: /health

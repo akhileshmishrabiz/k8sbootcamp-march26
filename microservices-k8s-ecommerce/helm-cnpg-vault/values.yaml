@@ -76,7 +76,8 @@ cnpg:
     - name: payments
 
 # Service configurations
-# Note: All secrets (JWT, Razorpay, AWS) are managed via Vault
+# Note: All secrets (JWT, Razorpay) are managed via Vault.
+# notification-service uses an in-cluster Mailpit SMTP sink (no AWS/SES creds).
 services:
   productService:
     enabled: true
@@ -161,10 +162,11 @@ services:
     replicas: 1
     env: development
     logLevel: INFO
-    aws:
-      region: us-east-1
-      sesSenderEmail: noreply@example.com
-      # credentials from Vault (aws-credentials secret)
+    smtp:
+      host: mailpit
+      port: 1025
+      senderEmail: noreply@ecommerce.local
+      senderName: E-Commerce Platform
     resources:
       requests:
         cpu: 50m
@@ -172,6 +174,10 @@ services:
       limits:
         cpu: 250m
         memory: 256Mi
+
+  mailpit:
+    enabled: true
+    image: axllent/mailpit:latest
 
 # API Gateway
 apiGateway:
@@ -200,3 +206,19 @@ frontend:
     limits:
       cpu: 100m
       memory: 128Mi
+
+# Distributed tracing (OpenTelemetry → OTel Collector → Tempo → Grafana).
+# Off by default — students start with the basic stack. Enable per-lesson with:
+#   helm upgrade ecommerce-vault ./helm-cnpg-vault -n ecommerce --set tracing.enabled=true
+# Also requires the tracing infra manifests to be applied separately:
+#   kubectl apply -f ./monitor/tracing/
+# (or run ./helm-cnpg-vault-deploy.sh with TRACING_ENABLED=true)
+tracing:
+  enabled: false
+  # OTLP/HTTP endpoint reachable from app pods. Defaults to the in-cluster
+  # OTel Collector deployed by ./monitor/tracing/.
+  endpoint: http://otel-collector.monitoring.svc.cluster.local:4318
+  # Sampler — parentbased_traceidratio with ratio=1.0 keeps every trace in dev.
+  # Lower (e.g. 0.1) for higher-throughput demos.
+  samplerArg: "1.0"
+  environment: dev

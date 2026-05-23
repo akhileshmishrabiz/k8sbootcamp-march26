@@ -16,6 +16,10 @@ spec:
     metadata:
       labels:
         app: order-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "{{ .Values.services.orderService.port }}"
     spec:
       containers:
         - name: order-service
@@ -69,6 +73,7 @@ spec:
               value: http://product-service:{{ .Values.services.productService.port }}
             - name: LOG_LEVEL
               value: {{ .Values.services.orderService.logLevel }}
+            {{- include "ecommerce.otelEnv" (dict "root" $ "serviceName" "order-service") | nindent 12 }}
           readinessProbe:
             httpGet:
               path: /health

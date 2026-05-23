@@ -9,7 +9,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production && npm cache clean --force
+RUN npm install --omit=dev && npm cache clean --force
 
 # Production stage
 FROM node:18-alpine
@@ -43,5 +43,6 @@ EXPOSE 8003
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 
-# Start the application
-CMD ["node", "src/index.js"]
+# Start the application. tracing.js is a no-op unless OTEL_EXPORTER_OTLP_ENDPOINT
+# is set, so the same image works whether tracing is enabled or not.
+CMD ["node", "--require", "./src/tracing.js", "src/index.js"]

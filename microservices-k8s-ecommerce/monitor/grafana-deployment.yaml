@@ -23,6 +23,42 @@ data:
         editable: true
         jsonData:
           maxLines: 1000
+          # Pull trace_id from log lines and link to Tempo. The notification
+          # service emits JSON logs; pattern matches "trace_id":"abc..." too.
+          derivedFields:
+            - name: TraceID
+              matcherRegex: '"?trace[_-]?id"?[ :=]+"?([a-f0-9]{32})"?'
+              url: '$${__value.raw}'
+              datasourceUid: tempo
+              urlDisplayLabel: 'View trace'
+      - name: Tempo
+        type: tempo
+        uid: tempo
+        access: proxy
+        url: http://tempo.monitoring.svc.cluster.local:3200
+        isDefault: false
+        editable: true
+        jsonData:
+          # Pivot from a trace → corresponding logs in Loki using service.name
+          tracesToLogsV2:
+            datasourceUid: loki
+            spanStartTimeShift: '-5m'
+            spanEndTimeShift: '5m'
+            tags:
+              - key: service.name
+                value: service_name
+            filterByTraceID: false
+            filterBySpanID: false
+          # Pivot from a trace → RED metrics in Prometheus
+          tracesToMetrics:
+            datasourceUid: prometheus
+            tags:
+              - key: service.name
+                value: service
+          serviceMap:
+            datasourceUid: prometheus
+          nodeGraph:
+            enabled: true
 ---
 apiVersion: v1
 kind: ConfigMap

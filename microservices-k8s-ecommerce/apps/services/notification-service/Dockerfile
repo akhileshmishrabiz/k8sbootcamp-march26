@@ -24,4 +24,4 @@ EXPOSE 8006
 # Kubernetes probe example: httpGet on /health endpoint
 # For local testing, use: curl http://localhost:8006/health
 
-CMD ["python", "app.py"]
+CMD ["opentelemetry-instrument", "python", "app.py"]

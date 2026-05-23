@@ -41,7 +41,7 @@ Helm chart deploying 6 microservices with:
 │          ├── Cart Service (8003) → Redis                                    │
 │          ├── Order Service (8004) → orders-rw DB + RabbitMQ                 │
 │          ├── Payment Service (8005) → payments-rw DB                        │
-│          └── Notification Service (8006) ← RabbitMQ                         │
+│          └── Notification Service (8006) ← RabbitMQ → Mailpit SMTP (:1025)  │
 │                                                                              │
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -70,6 +70,7 @@ This will:
 | API Gateway | http://localhost:9080 | - |
 | Vault UI | http://localhost:8200 | Token: `root` |
 | RabbitMQ UI | http://localhost:16672 | guest/guest |
+| Mailpit UI | http://localhost:8025 | - (port-forward: `kubectl port-forward -n ecommerce svc/mailpit 8025:8025`) |
 
 ## Secrets Management
 
@@ -82,7 +83,10 @@ This will:
 | `secret/ecommerce/rabbitmq` | username, password | order, notification |
 | `secret/ecommerce/app` | jwt_secret | user, cart |
 | `secret/ecommerce/razorpay` | key_id, key_secret, webhook_secret | payment |
-| `secret/ecommerce/aws` | access_key_id, secret_access_key | notification |
+
+> Notification service runs against the in-cluster **Mailpit** SMTP sink — no
+> AWS/SES credentials are stored in Vault. SMTP host/port/sender are passed via
+> Helm values (`services.notificationService.smtp.*`).
 
 ### View Secrets in Vault
 
@@ -137,7 +141,8 @@ kubectl get secret db-credentials -n ecommerce \
 | Cart Service | 8003 | Node.js | Redis |
 | Order Service | 8004 | Go | PostgreSQL (orders-rw) |
 | Payment Service | 8005 | Python | PostgreSQL (payments-rw) |
-| Notification Service | 8006 | Python | RabbitMQ consumer |
+| Notification Service | 8006 | Python | RabbitMQ consumer → Mailpit SMTP |
+| Mailpit | 1025 (SMTP) / 8025 (UI) | Go | In-cluster email sink for dev/demo |
 
 ## CNPG Database Clusters
 
@@ -167,6 +172,7 @@ helm-cnpg-vault/
 │   ├── order-service.yaml
 │   ├── payment-service.yaml
 │   ├── notification-service.yaml
+│   ├── mailpit.yaml             # SMTP sink for notification-service
 │   ├── api-gateway.yaml
 │   └── frontend.yaml
 └── vault/

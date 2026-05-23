@@ -58,6 +58,16 @@ func Connect(cfg *config.Config) *gorm.DB {
 }
 
 func Migrate(db *gorm.DB) {
+	// GORM 1.25's AutoMigrate runs `SELECT * FROM <table> LIMIT 1` during
+	// existing-schema introspection and fails with "insufficient arguments"
+	// when the row contains a text[] column (Images). HasTable issues only the
+	// information_schema lookup, so skipping AutoMigrate when the table is
+	// already present avoids the crash on pod restarts.
+	if db.Migrator().HasTable(&models.Product{}) {
+		log.Info("Tables already exist, skipping AutoMigrate")
+		return
+	}
+
 	log.Info("Running database migrations...")
 
 	err := db.AutoMigrate(

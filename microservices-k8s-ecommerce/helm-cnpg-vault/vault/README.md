@@ -66,7 +66,10 @@ kubectl get secrets -n ecommerce
 | `secret/ecommerce/rabbitmq` | `username`, `password` | order, notification |
 | `secret/ecommerce/app` | `jwt_secret` | user-service, cart-service |
 | `secret/ecommerce/razorpay` | `key_id`, `key_secret`, `webhook_secret` | payment-service |
-| `secret/ecommerce/aws` | `access_key_id`, `secret_access_key` | notification-service |
+
+> notification-service ships email to the in-cluster **Mailpit** SMTP sink and
+> needs no AWS/SES credentials. SMTP host/port/sender come from Helm values
+> (`services.notificationService.smtp.*`).
 
 ---
 
