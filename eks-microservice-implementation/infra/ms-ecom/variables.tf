@@ -24,11 +24,15 @@ variable "alb_group_name" {
   default     = "k8sbatch-shared-alb"
 }
 
-variable "host" {
-  description = "Hostname routed by the ingress"
-  default     = "shop.livingdevops.org"
+variable "subdomain" {
+  description = "Subdomain routed by the ingress"
+  default     = "shop"
 }
 
+variable "domain_name" {
+  description = "Main domain name"
+  default     = "livingdevops.org"
+}
 variable "api_gateway_service_name" {
   default = "api-gateway"
 }
@@ -39,4 +43,9 @@ variable "frontend_service_name" {
 
 variable "service_port" {
   default = 80
+}
+
+variable "acm_cert_arn" {
+  description = "ACM certificate ARN"
+  default     = "arn:aws:acm:ap-south-1:879381241087:certificate/d7c449d8-1540-4157-8959-bc48bb44b128"
 }

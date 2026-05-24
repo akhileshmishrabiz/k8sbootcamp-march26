@@ -6,8 +6,8 @@ output "ingress_namespace" {
   value = kubernetes_ingress_v1.ecommerce.metadata[0].namespace
 }
 
-output "ingress_host" {
-  value = var.host
+output "app_url" {
+  value = "${var.subdomain}.${var.domain_name}"
 }
 
 output "alb_hostname" {
