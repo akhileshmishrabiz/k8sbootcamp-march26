@@ -1,0 +1,13 @@
+# 90% stable / 10% canary — patch weights for progressive rollout.
+apiVersion: split.smi-spec.io/v1alpha1
+kind: TrafficSplit
+metadata:
+  name: order-service-split
+  namespace: ecommerce
+spec:
+  service: order-service
+  backends:
+    - service: order-service-stable
+      weight: 900m
+    - service: order-service-canary
+      weight: 100m

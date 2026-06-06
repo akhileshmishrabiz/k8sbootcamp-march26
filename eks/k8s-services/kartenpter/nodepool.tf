@@ -92,7 +92,7 @@ resource "kubectl_manifest" "nodepool_default" {
             {
               key      = "karpenter.k8s.aws/instance-size"
               operator = "NotIn"
-              values   = ["nano", "micro", "small"]
+              values   = [ "small", "medium", "large"]
             },
           ]
           expireAfter = "720h"
