@@ -1,0 +1,67 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: health-checker
+  namespace: openai-monitor
+spec:
+  schedule: "*/5 * * * *"  # Every 5 minutes
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: health-checker-sa
+          containers:
+          - name: health-checker
+            image: health-checker:latest
+            imagePullPolicy: Never
+            env:
+            - name: JAVA_APP_URL
+              value: "http://failure-app-service:8080"
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openai-secret
+                  key: openai-api-key
+            - name: DB_HOST
+              value: "postgres-service"
+            - name: DB_NAME
+              value: "failuredb"
+            - name: DB_USER
+              value: "postgres"
+            - name: DB_PASSWORD
+              value: "postgres"
+            - name: NAMESPACE
+              value: "openai-monitor"
+          restartPolicy: OnFailure
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: health-checker-sa
+  namespace: openai-monitor
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: health-checker-role
+  namespace: openai-monitor
+rules:
+- apiGroups: [""]
+  resources: ["pods", "pods/log"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: health-checker-rolebinding
+  namespace: openai-monitor
+subjects:
+- kind: ServiceAccount
+  name: health-checker-sa
+  namespace: openai-monitor
+roleRef:
+  kind: Role
+  name: health-checker-role
+  apiGroup: rbac.authorization.k8s.io

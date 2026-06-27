@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "aws-api": {
+      "command": "uvx",
+      "args": ["awslabs.aws-api-mcp-server@latest"],
+      "env": {
+        "AWS_REGION": "ap-south-1",
+        "AWS_API_MCP_PROFILE_NAME": "default",
+        "READ_OPERATIONS_ONLY": "false",
+        "REQUIRE_MUTATION_CONSENT": "false",
+        "FASTMCP_LOG_LEVEL": "ERROR"
+      },
+      "disabled": false,
+      "autoApprove": []
+    }
+  }
+}

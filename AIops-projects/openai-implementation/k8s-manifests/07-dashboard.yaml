@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dashboard
+  namespace: openai-monitor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dashboard
+  template:
+    metadata:
+      labels:
+        app: dashboard
+    spec:
+      containers:
+      - name: dashboard
+        image: dashboard-openai:latest
+        imagePullPolicy: Never
+        env:
+        - name: JAVA_APP_URL
+          value: "http://failure-app-service:8080"
+        - name: DB_HOST
+          value: "postgres-service"
+        - name: DB_NAME
+          value: "failuredb"
+        - name: DB_USER
+          value: "postgres"
+        - name: DB_PASSWORD
+          value: "postgres"
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openai-secret
+              key: openai-api-key
+        ports:
+        - containerPort: 3001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dashboard-service
+  namespace: openai-monitor
+spec:
+  selector:
+    app: dashboard
+  ports:
+  - port: 3001
+    targetPort: 3001
+    nodePort: 30002
+  type: NodePort
