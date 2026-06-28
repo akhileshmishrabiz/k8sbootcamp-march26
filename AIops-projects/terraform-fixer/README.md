@@ -1,6 +1,6 @@
 # Terraform Checkov Auto-Fixer
 
-Intentionally **non-compliant** Terraform (bare S3 bucket) → **Checkov** scan → **AI** fixes → **PR**.
+Intentionally **non-compliant** Terraform (bare S3 bucket) → **Checkov** scan → **AI** fixes → **feature branch push**.
 
 Terraform is kept minimal on purpose. Checkov finds the gaps; the workflow adds best practices.
 
@@ -21,7 +21,7 @@ Workflow: [`.github/workflows/terraform-fixer.yaml`](../../.github/workflows/ter
 
 1. Checkov scans the Terraform
 2. OpenAI fixes failing rules via `fix_terraform.py`
-3. Pushes a branch and opens a PR
+3. Pushes to a `feature/checkov-fix-*` branch (open a PR manually if you want)
 
 ### Setup
 
@@ -53,4 +53,4 @@ git diff *.tf
 - `CKV_AWS_20` — public access block
 - `CKV_AWS_21` — logging
 
-The AI workflow adds those fixes in the PR — the starter files stay simple until you merge.
+The AI workflow adds those fixes on the feature branch — the starter files on `main` stay simple until you merge.
