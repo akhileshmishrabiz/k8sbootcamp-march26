@@ -24,6 +24,10 @@ function setChatReady(ready, message) {
 
 async function checkHealth() {
   const response = await fetch(`${API_BASE}/health`);
+  const contentType = response.headers.get("content-type") || "";
+  if (!contentType.includes("application/json")) {
+    throw new Error("Health endpoint returned HTML — port-forward api-gateway, not rag-frontend alone");
+  }
   if (!response.ok) {
     throw new Error("Health check failed");
   }
@@ -83,8 +87,12 @@ async function pollUntilReady() {
       if (await checkHealth()) {
         return;
       }
-    } catch {
-      setChatReady(false, "API not reachable yet. Waiting for pods to become ready...");
+    } catch (error) {
+      const hint =
+        error.message && error.message.includes("port-forward")
+          ? error.message
+          : "API not reachable yet. Waiting for pods to become ready...";
+      setChatReady(false, hint);
     }
     await new Promise((resolve) => setTimeout(resolve, 5000));
   }
