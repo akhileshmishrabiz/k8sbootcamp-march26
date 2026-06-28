@@ -108,10 +108,7 @@ jobs:
           fi
 
           git add "${{ env.PROJECT_DIR }}/Dockerfile"
-          git commit -m "$(cat <<'EOF'
-fix(container-image-fixer): auto-fix Dockerfile from Trivy scan findings [skip ci]
-
-Automated update from container-image-fixer workflow based on Trivy OS and library scan results.
-EOF
-)"
+          git commit \
+            -m "fix(container-image-fixer): auto-fix Dockerfile from Trivy scan findings [skip ci]" \
+            -m "Automated update from container-image-fixer workflow based on Trivy OS and library scan results."
           git push
