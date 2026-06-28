@@ -1,18 +1,15 @@
-# Intentionally flawed Dockerfile for container security training demos.
-# A scanner (e.g. Trivy) should report multiple findings against this image.
-
-FROM python:3.12
-
-USER root
+FROM python:3.13-slim-bookworm
 
 RUN apt-get update && \
-    apt-get install -y curl wget netcat-openbsd && \
-    pip install --no-cache-dir flask requests
+    apt-get install -y --no-install-recommends curl wget && \
+    pip install --no-cache-dir flask requests && \
+    apt-get purge -y --auto-remove curl wget && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-ADD . /app/
+COPY . /app/
 
-EXPOSE 8080 22
+USER nobody
 
 CMD ["python", "-m", "http.server", "8080"]
