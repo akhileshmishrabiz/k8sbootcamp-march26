@@ -96,7 +96,7 @@ def fix_dockerfile(
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": user_prompt},
         ],
-        temperature=0.2,
+        temperature=0.5,
     )
     fixed = response.choices[0].message.content or ""
     if not fixed.strip():
