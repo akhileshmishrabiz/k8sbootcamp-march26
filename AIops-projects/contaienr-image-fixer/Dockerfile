@@ -1,20 +1,18 @@
-FROM python:3.12.0-slim-buster@sha256:1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
+# Intentionally flawed Dockerfile for container security training demos.
+# A scanner (e.g. Trivy) should report multiple findings against this image.
+
+FROM python:3.12
+
+USER root
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# Create a non-root user
-RUN useradd -m appuser
-
-USER appuser
+    apt-get install -y curl wget netcat-openbsd && \
+    pip install --no-cache-dir flask requests
 
 WORKDIR /app
 
-COPY . /app/
+ADD . /app/
 
-# Add a health check
-HEALTHCHECK CMD curl --fail http://localhost:8080/ || exit 1
+EXPOSE 8080 22
 
 CMD ["python", "-m", "http.server", "8080"]

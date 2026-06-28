@@ -89,14 +89,29 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: gpt-4o-mini
+          OPENAI_TEMPERATURE: "0.1"
+          PREFERRED_PYTHON_IMAGE: python:3.13-slim-bookworm
           DOCKERFILE_PATH: Dockerfile
           SCAN_RESULTS_FILE: scan-summary.json
         run: |
           python3 -m pip install --quiet -r requirements.txt
           python3 fix_dockerfile.py
 
-      - name: Commit and push Dockerfile fix
+      - name: Validate fixed Dockerfile builds
+        id: validate
         if: steps.scan.outputs.vuln_count != '0'
+        run: |
+          if docker build -t ${{ env.IMAGE_NAME }}-fixed:verify .; then
+            echo "build_ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "build_ok=false" >> "$GITHUB_OUTPUT"
+            echo "::error::Fixed Dockerfile failed to build; skipping commit."
+            git checkout -- Dockerfile
+            exit 1
+          fi
+
+      - name: Commit and push Dockerfile fix
+        if: steps.scan.outputs.vuln_count != '0' && steps.validate.outputs.build_ok == 'true'
         working-directory: ${{ github.workspace }}
         run: |
           git config user.name "github-actions[bot]"

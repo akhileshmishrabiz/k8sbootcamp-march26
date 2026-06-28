@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -12,22 +13,47 @@ from openai import OpenAI
 
 
 DEFAULT_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
+DEFAULT_TEMPERATURE = float(os.environ.get("OPENAI_TEMPERATURE", "0.1"))
+PREFERRED_PYTHON_IMAGE = os.environ.get(
+    "PREFERRED_PYTHON_IMAGE",
+    "python:3.13-slim-bookworm",
+)
 
 SYSTEM_PROMPT = """\
 You are a container security expert. Given a Dockerfile and vulnerability scan findings,
 produce a corrected Dockerfile that addresses the reported issues.
 
-Rules:
-- Output ONLY the complete fixed Dockerfile content. No markdown fences, no commentary.
-- Keep the image functional as a minimal Python 3.12 base (no application code required).
-- Pin the base image to a specific digest or patch version when possible.
+Decision order (highest impact first):
+1. Upgrade the base image to the latest stable Python slim on a current Debian release
+   (bookworm or trixie). Do NOT preserve an old Python major version just because the
+   current Dockerfile uses it.
+2. Remove unnecessary packages and ports that expand the attack surface.
+3. Apply package-level fixes from FixedVersion in scan findings when still needed.
+4. Harden the Dockerfile (non-root user, minimal layers, no ADD unless required).
+
+What "keep the image functional" means:
+- The container must still build and run the same CMD/ENTRYPOINT behavior.
+- It does NOT mean keeping python:3.12, old Debian releases (buster/bullseye), or
+  every installed package unchanged.
+- For a minimal demo app (e.g. python -m http.server), upgrading Python major version
+  is expected and preferred.
+
+Base image rules:
+- NEVER use @sha256: digests. You cannot look up real digests — invented ones break builds.
+- Pin with an explicit version tag only (e.g. python:3.13.13-slim-bookworm).
+- Do not use buster, stretch, or other EOL Debian variants.
+
+Dockerfile rules:
+- Output ONLY the complete fixed Dockerfile. No markdown fences, no commentary.
 - Run as a non-root user.
-- Add a HEALTHCHECK.
+- Add a HEALTHCHECK only if the image includes a health-check tool (e.g. curl).
 - Minimize installed packages; clean apt caches in the same RUN layer.
 - Prefer COPY over ADD unless ADD is truly needed.
 - Do not expose unnecessary ports.
 - Follow Docker and CIS best practices.
 """
+
+FROM_DIGEST_RE = re.compile(r"@sha256:[0-9a-f]{64}", re.IGNORECASE)
 
 
 def parse_args() -> argparse.Namespace:
@@ -76,13 +102,27 @@ def strip_markdown_fences(content: str) -> str:
     return text.rstrip() + "\n"
 
 
+def strip_invented_digests(content: str) -> str:
+    """Remove @sha256 pins — models cannot resolve real digests and often hallucinate them."""
+    cleaned_lines = []
+    for line in content.splitlines():
+        if line.strip().upper().startswith("FROM "):
+            line = FROM_DIGEST_RE.sub("", line)
+        cleaned_lines.append(line)
+    return "\n".join(cleaned_lines).rstrip() + "\n"
+
+
 def fix_dockerfile(
     client: OpenAI,
     dockerfile: str,
     scan_results: str,
     model: str,
+    temperature: float,
+    preferred_base: str,
 ) -> str:
     user_prompt = f"""Fix the Dockerfile below based on these scan findings.
+
+Target base image (use this or a newer patch-level variant): {preferred_base}
 
 ## Scan findings
 {scan_results}
@@ -96,13 +136,13 @@ def fix_dockerfile(
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": user_prompt},
         ],
-        temperature=0.5,
+        temperature=temperature,
     )
     fixed = response.choices[0].message.content or ""
     if not fixed.strip():
         print("Error: OpenAI returned an empty response.", file=sys.stderr)
         sys.exit(1)
-    return strip_markdown_fences(fixed)
+    return strip_invented_digests(strip_markdown_fences(fixed))
 
 
 def main() -> None:
@@ -120,7 +160,14 @@ def main() -> None:
     scan_results = read_file(scan_results_path)
 
     client = OpenAI(api_key=api_key)
-    fixed_dockerfile = fix_dockerfile(client, dockerfile, scan_results, args.model)
+    fixed_dockerfile = fix_dockerfile(
+        client,
+        dockerfile,
+        scan_results,
+        args.model,
+        DEFAULT_TEMPERATURE,
+        PREFERRED_PYTHON_IMAGE,
+    )
 
     if args.dry_run:
         print(fixed_dockerfile, end="")
