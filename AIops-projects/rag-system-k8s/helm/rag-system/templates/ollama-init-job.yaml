@@ -1,0 +1,43 @@
+{{- if .Values.ollama.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ollama-model-pull
+  namespace: {{ include "rag-system.namespace" . }}
+  labels:
+    app: ollama-init
+    {{- include "rag-system.labels" . | nindent 4 }}
+spec:
+  backoffLimit: 10
+  template:
+    metadata:
+      labels:
+        app: ollama-init
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+        - name: wait-for-ollama
+          image: curlimages/curl:8.11.1
+          command:
+            - sh
+            - -c
+            - |
+              until curl -sf http://ollama:11434/; do
+                echo "Waiting for Ollama..."
+                sleep 5
+              done
+      containers:
+        - name: pull-models
+          image: curlimages/curl:8.11.1
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              {{- range .Values.ollama.models }}
+              echo "Pulling {{ . }}..."
+              curl -sf http://ollama:11434/api/pull -d '{"name":"{{ . }}"}'
+              echo "Pulled {{ . }}"
+              {{- end }}
+              echo "All models ready."
+{{- end }}

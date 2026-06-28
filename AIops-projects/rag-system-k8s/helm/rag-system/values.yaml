@@ -1,0 +1,69 @@
+global:
+  namespace: rag-system
+  imagePullPolicy: Never
+
+qdrant:
+  enabled: true
+  image: qdrant/qdrant:v1.12.5
+  storage: 2Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+ollama:
+  enabled: true
+  image: ollama/ollama:0.5.7
+  models:
+    - nomic-embed-text
+    - llama3.2:3b
+  resources:
+    requests:
+      cpu: 500m
+      memory: 2Gi
+    limits:
+      cpu: 2000m
+      memory: 6Gi
+
+ragApi:
+  enabled: true
+  image: rag-api:local
+  port: 8000
+  embedModel: nomic-embed-text
+  llmModel: llama3.2:3b
+  chunkSize: 500
+  chunkOverlap: 50
+  topK: 5
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+frontend:
+  enabled: true
+  image: rag-frontend:local
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+apiGateway:
+  enabled: true
+  image: nginx:1.27-alpine
+  nodePort: 30080
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi

@@ -1,0 +1,34 @@
+# Kubernetes Networking Basics
+
+Kubernetes networking allows pods to communicate inside a cluster.
+
+## Services
+
+A Service provides a stable DNS name and load-balanced access to pods. Common types:
+
+- ClusterIP: internal-only access
+- NodePort: exposes a port on each node
+- LoadBalancer: cloud-managed external access
+
+## Ingress
+
+Ingress routes HTTP traffic from outside the cluster to Services. It is useful when you want one entry point for multiple apps.
+
+## DNS
+
+Inside the cluster, services are reachable at:
+
+`<service-name>.<namespace>.svc.cluster.local`
+
+For example, rag-api in namespace rag-system is available at:
+
+rag-api.rag-system.svc.cluster.local
+
+## kind Port Mapping
+
+kind maps NodePort services to localhost using extraPortMappings in kind-config.yaml.
+The RAG MVP exposes the API gateway at http://localhost:8080.
+
+## Network Policies
+
+NetworkPolicies restrict pod-to-pod traffic. This MVP keeps all services open inside the namespace for learning purposes.

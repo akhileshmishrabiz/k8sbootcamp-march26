@@ -1,0 +1,4 @@
+.venv/
+checkov-results.json
+__pycache__/
+*.pyc

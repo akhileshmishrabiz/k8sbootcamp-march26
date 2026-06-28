@@ -1,0 +1,6 @@
+apiVersion: v2
+name: rag-system
+description: MVP RAG system on kind with Ollama, Qdrant, and FastAPI
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

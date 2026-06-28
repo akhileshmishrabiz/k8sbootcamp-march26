@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAG System MVP</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>RAG System MVP</h1>
+      <p>Upload documents, index them in Qdrant, and chat with Ollama.</p>
+    </header>
+
+    <main class="grid">
+      <section class="panel">
+        <h2>Knowledge Base</h2>
+        <form id="upload-form">
+          <label>
+            Title
+            <input type="text" id="doc-title" placeholder="Kubernetes networking notes" required />
+          </label>
+          <label>
+            Content
+            <textarea id="doc-content" rows="8" placeholder="Paste text or upload a .txt/.md file"></textarea>
+          </label>
+          <label class="file-label">
+            Or upload file
+            <input type="file" id="doc-file" accept=".txt,.md,.markdown,.csv,.json" />
+          </label>
+          <button type="submit">Ingest Document</button>
+        </form>
+        <div id="upload-status" class="status"></div>
+        <ul id="document-list"></ul>
+      </section>
+
+      <section class="panel">
+        <h2>Chat</h2>
+        <div id="chat-status" class="status waiting">Checking LLM status...</div>
+        <div id="chat-log"></div>
+        <form id="chat-form">
+          <textarea id="question" rows="3" placeholder="Ask anything — document Q&amp;A works after you ingest files" required disabled></textarea>
+          <button id="chat-submit" type="submit" disabled>Ask</button>
+        </form>
+      </section>
+    </main>
+  </div>
+  <script src="/app.js"></script>
+</body>
+</html>

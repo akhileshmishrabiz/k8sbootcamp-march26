@@ -1,0 +1,67 @@
+---
+name: Terraform Checkov Auto-Fixer
+
+on:
+  workflow_dispatch:
+
+env:
+  PROJECT_DIR: AIops-projects/terraform-fixer
+
+jobs:
+  scan-and-fix:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    defaults:
+      run:
+        working-directory: AIops-projects/terraform-fixer
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Scan with Checkov
+        id: scan
+        run: |
+          pip install checkov
+          checkov -d . --framework terraform -o json --output-file-path checkov-results.json || true
+          FAIL_COUNT=$(python3 -c "import json; print(len(json.load(open('checkov-results.json')).get('results',{}).get('failed_checks',[])))")
+          echo "fail_count=$FAIL_COUNT" >> "$GITHUB_OUTPUT"
+          if [ "$FAIL_COUNT" -gt 0 ]; then
+            jq '[.results.failed_checks[] | {check_id, check_name, file_path, resource}]' checkov-results.json
+          else
+            echo "No Checkov failures found."
+          fi
+
+      - name: Fix Terraform with OpenAI
+        if: steps.scan.outputs.fail_count != '0'
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          pip install -r requirements.txt
+          python3 fix_terraform.py
+
+      - name: Create pull request
+        if: steps.scan.outputs.fail_count != '0'
+        working-directory: ${{ github.workspace }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet -- "${{ env.PROJECT_DIR }}/"; then
+            echo "No Terraform changes after AI fix."
+            exit 0
+          fi
+
+          BRANCH="fix/checkov-$(date +%Y%m%d%H%M%S)"
+          git checkout -b "$BRANCH"
+          git add "${{ env.PROJECT_DIR }}/"
+          git commit -m "fix(terraform-fixer): address Checkov findings"
+          git push -u origin "$BRANCH"
+          gh pr create \
+            --title "fix(terraform-fixer): address Checkov findings" \
+            --body "Automated Terraform fixes from Checkov scan results."

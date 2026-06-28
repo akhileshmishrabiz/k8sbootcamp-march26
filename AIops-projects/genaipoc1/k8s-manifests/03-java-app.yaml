@@ -1,0 +1,203 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: failure-app
+  namespace: failure-monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: failure-app
+  template:
+    metadata:
+      labels:
+        app: failure-app
+    spec:
+      containers:
+      - name: failure-app
+        image: failure-app:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+        env:
+        # Database credentials
+        - name: DB_HOST
+          value: "postgres-service"
+        - name: DB_NAME
+          value: "failuredb"
+        - name: DB_USER
+          value: "postgres"
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: db.password
+
+        # Secrets from app-secrets
+        - name: PAYMENT_GATEWAY_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: payment.gateway.api.key
+        - name: STRIPE_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: stripe.secret.key
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: jwt.secret
+        - name: ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: encryption.key
+        - name: SENDGRID_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: sendgrid.api.key
+        - name: AWS_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: aws.access.key
+        - name: AWS_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: aws.secret.key
+        - name: OAUTH_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: oauth.client.secret
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: redis.password
+
+        # ConfigMap values from app-config
+        - name: APP_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: app.name
+        - name: APP_VERSION
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: app.version
+        - name: APP_ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: app.environment
+        - name: FEATURE_PAYMENT_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: feature.payment.enabled
+        - name: FEATURE_NOTIFICATIONS_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: feature.notifications.enabled
+        - name: FEATURE_ANALYTICS_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: feature.analytics.enabled
+        - name: FEATURE_CACHE_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: feature.cache.enabled
+        - name: FEATURE_RATELIMIT_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: feature.ratelimit.enabled
+        - name: PAYMENT_GATEWAY_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: payment.gateway.url
+        - name: NOTIFICATION_SERVICE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: notification.service.url
+        - name: ANALYTICS_SERVICE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: analytics.service.url
+        - name: HTTP_CONNECT_TIMEOUT
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: http.connect.timeout
+        - name: HTTP_READ_TIMEOUT
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: http.read.timeout
+        - name: DATABASE_QUERY_TIMEOUT
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: database.query.timeout
+        - name: DATABASE_POOL_SIZE
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: database.pool.size
+        - name: DATABASE_POOL_MAX_WAIT_MS
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: database.pool.max.wait.ms
+        - name: CIRCUIT_BREAKER_FAILURE_THRESHOLD
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: circuit.breaker.failure.threshold
+        - name: CIRCUIT_BREAKER_TIMEOUT_SECONDS
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: circuit.breaker.timeout.seconds
+        - name: RETRY_MAX_ATTEMPTS
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: retry.max.attempts
+        - name: RETRY_BACKOFF_MS
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: retry.backoff.ms
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: failure-app-service
+  namespace: failure-monitoring
+spec:
+  selector:
+    app: failure-app
+  ports:
+  - port: 8080
+    targetPort: 8080
+  type: ClusterIP
