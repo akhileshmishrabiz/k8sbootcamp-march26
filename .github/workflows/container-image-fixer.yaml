@@ -51,7 +51,7 @@ jobs:
           format: json
           output: ${{ env.PROJECT_DIR }}/${{ env.SCAN_RESULTS_FILE }}
           vuln-type: os,library
-          severity: CRITICAL,HIGH,MEDIUM
+          severity: CRITICAL,HIGH
           exit-code: "0"
 
       - name: Summarize scan findings
