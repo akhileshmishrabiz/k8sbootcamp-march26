@@ -36,7 +36,7 @@ cd AIops-projects/terraform-fixer
 python3 -m venv .venv && source .venv/bin/activate
 pip install checkov -r requirements.txt
 
-checkov -d . --framework terraform -o json --output-file-path checkov-results.json || true
+checkov -d . --framework terraform -o json > checkov-results.json || true
 
 export OPENAI_API_KEY=sk-...
 python3 fix_terraform.py
